@@ -18,7 +18,7 @@ int main (char *args)
     int n = 3;
     int h = 2;
 
-    double *A = (double *) malloc(m * n * sizeof(double));
+    double *A = malloc(m * n * sizeof(double));
     if (A == NULL)
     {
         fprintf (stderr, "Memory allocation for array A failed! \n");
@@ -31,7 +31,7 @@ int main (char *args)
     }
 
 
-    double *B = (double *) malloc(n * h * sizeof(double));
+    double *B = malloc(n * h * sizeof(double));
     if (B == NULL)
     {
         fprintf (stderr, "Memory allocation for array B failed! \n");
@@ -43,17 +43,25 @@ int main (char *args)
         B[i] = i + 1;
     }
 
-    double *C = (double *) malloc(m * h * sizeof(double));
+    double *C = malloc(m * h * sizeof(double));
     if (C == NULL)
     {
         fprintf(stderr, "Memory allocation for array C failed! \n");
         return -1;
     }
 
+    // Free variables after use.
+    free(A);
+    free(B);
+    free(C);
+    A = NULL;
+    B = NULL;
+    C = NULL;
 
-    int i = 3;
-    int j = 4;
-    double *D = (double *) malloc(i * j * sizeof(double));
+
+    int i = 3; // Rows for D-matrix and E-vector.
+    int j = 4; // Columns for D-matrix
+    double *D = malloc(i * j * sizeof(double));
     if (D == NULL)
     {
         fprintf(stderr, "Memory allocation for array D failed! \n");
@@ -75,7 +83,7 @@ int main (char *args)
     D[10] = -1;
     D[11] = 27;
 
-    double *E = (double *) malloc(i * sizeof(double));
+    double *E = malloc(i * sizeof(double));
     if (E == NULL)
     {
         fprintf(stderr, "Memory allocation for array E failed! \n");
@@ -88,20 +96,59 @@ int main (char *args)
 
     gauss_elimination(D, i, E);
 
-
-    // Clear variables from memory.
-    free(A);
-    free(B);
-    free(C);
+    // Free variables after use
     free(D);
     free(E);
-
-    // Set variables to NULL.
-    A = NULL;
-    B = NULL;
-    C = NULL;
     D = NULL;
     E = NULL;
+
+
+    i = 3; // Rows for F-matrix and G-vector.
+    j = 4; // Columns for F-matrix
+    double *F = malloc(i * j * sizeof(double));
+    if (F == NULL)
+    {
+        fprintf(stderr, "Memory allocation for array F failed! \n");
+        return -1;
+    }
+    
+    // Make init variable and 
+    F[0] = 2;
+    F[1] = 4;
+    F[2] = -2;
+    F[3] = 2;
+
+    F[4] = 4;
+    F[5] = 9;
+    F[6] = -3;
+    F[7] = 8;
+    
+    F[8] = -2;
+    F[9] = -3;
+    F[10] = 7;
+    F[11] = 10;
+
+    double *G = malloc(i * sizeof(double));
+    if (G == NULL)
+    {
+        fprintf(stderr, "Memory allocation for array E failed! \n");
+        return -1;
+    }
+    for (int it = 0; it < j; it++)
+    {
+        G[it] = 0;
+    }
+
+    gauss_elimination(F, i, G);
+
+    double *H = malloc(i * j * sizeof(double));
+
+
+    // Free variables after use.
+    free(F);
+    free(G);
+    F = NULL;
+    G = NULL;
 
     return 0;
 }
