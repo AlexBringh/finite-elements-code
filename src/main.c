@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "main.h"
 #include "gauss_elimination.h"
-#include "print_matrix.h"
+#include "matrix_utils.h"
 
 int main (char *args)
 {

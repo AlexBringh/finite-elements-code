@@ -4,25 +4,30 @@
 //	Date of creation: 14.10.2024
 //
 #include "gauss_elimination.h"
-#include "print_matrix.h"
+#include "matrix_utils.h"
 
-int gauss_elimination (double *A, int n, double *B)
+int gauss_elimination (double *A, int m, double *B)
 {
-    int forw = forward_elimination(A, n);
-    int back = backwards_substitution(A, n, B);
+    /*
+        Performs Gauss Elimination on a augmented matrix.
+        The matrix must be m-rows and n = m + 1 columns.
+    */
+    int forw = forward_elimination(A, m);
+    int back = backwards_substitution(A, m, B);
 
     return 0;
 }
 
-int forward_elimination (double *A, int n)
+int forward_elimination (double *A, int m)
 {
+    int n = m + 1;
     printf("Forwards elimination. \nInput matrix: \n");
-    print_matrix(A, n, n+1);
-    for (int i = 0; i < n; i++)
+    print_matrix(A, m, m+1);
+    for (int i = 0; i < m; i++)
     {
         // Perform partial pivoting
         int max = i;
-        for (int k = i + 1; k < n; k++)
+        for (int k = i + 1; k < m; k++) // i + 1 references to the columns.
         {
             double a = *(A + k * n + i);
             double b = *(A + max * n + i);
@@ -39,7 +44,7 @@ int forward_elimination (double *A, int n)
         // Swap the row with the largest value with the current row (the pivot row)
         if (max != i)
         {
-            for (int j = 0; j <= n; j++)
+            for (int j = 0; j <= m; j++)
             {
                 double t = *(A + i * n + j);
                 *(A + i * n + j) = *(A + max * n + j);
@@ -54,16 +59,16 @@ int forward_elimination (double *A, int n)
             fprintf(stderr, "Matrix is singular or nearly singular! \n");
             return -1;
         }
-        for (int j = 0; j <= n; j++)
+        for (int j = 0; j <= m; j++)
         {
             *(A + i * n + j) /= p;
         }
 
         // Eliminate the entries below the diagonal.
-        for (int j = i + 1; j < n; j++)
+        for (int j = i + 1; j < m; j++)
         {
             double f = *(A + j * n + i); 
-            for (int k = 0; k <= n; k++)
+            for (int k = 0; k <= m; k++)
             {
                 *(A + j * n + k) -= f * *(A + i * n + k);
             }
@@ -71,26 +76,27 @@ int forward_elimination (double *A, int n)
 
 
         printf("Forwards elimination, step: %d \n", i);
-        print_matrix(A, n, n+1);
+        print_matrix(A, m, n);
     }
 
     return 0;
 }
 
 
-int backwards_substitution (double *A, int n, double *B)
+int backwards_substitution (double *A, int m, double *B)
 {
-    for (int i = n - 1; i >= 0; --i)
+    int n = m + 1;
+    for (int i = m - 1; i >= 0; --i)
     {
-        *(B + i) = *(A + i * n + n);
-        for (int j = i + 1; j < n; j++)
+        *(B + i) = *(A + i * n + m);
+        for (int j = i + 1; j < m; j++)
         {
             *(B + i) -= *(A + i * n + j) * *(B + j);
         }
     }
 
     printf("Resulting matrix: \n");
-    print_matrix(B, n, 1);
+    print_matrix(B, m, 1);
 
     return 0;
 }
