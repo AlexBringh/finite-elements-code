@@ -12,56 +12,11 @@
 
 int main (char *args)
 {
-    printf("Hello World! \n");
+    printf("\n");
 
-    int m = 4;
-    int n = 3;
-    int h = 2;
-
-    double *A = malloc(m * n * sizeof(double));
-    if (A == NULL)
-    {
-        fprintf (stderr, "Memory allocation for array A failed! \n");
-        return -1;
-    }
-    // Set values for the A-array.
-    for (int i = 0; i < m * n; i++)
-    {
-        A[i] = i + 1;
-    }
-
-
-    double *B = malloc(n * h * sizeof(double));
-    if (B == NULL)
-    {
-        fprintf (stderr, "Memory allocation for array B failed! \n");
-        return -1;
-    }
-    // Set values for the B-array.
-    for (int i = 0; i < n * h; i++)
-    {
-        B[i] = i + 1;
-    }
-
-    double *C = malloc(m * h * sizeof(double));
-    if (C == NULL)
-    {
-        fprintf(stderr, "Memory allocation for array C failed! \n");
-        return -1;
-    }
-
-    // Free variables after use.
-    free(A);
-    free(B);
-    free(C);
-    A = NULL;
-    B = NULL;
-    C = NULL;
-
-
-    int i = 3; // Rows for D-matrix and E-vector.
-    int j = 4; // Columns for D-matrix
-    double *D = malloc(i * j * sizeof(double));
+    int m = 3; // Rows for D-matrix and E-vector.
+    int n = 4; // Columns for D-matrix
+    double *D = malloc(m * n * sizeof(double));
     if (D == NULL)
     {
         fprintf(stderr, "Memory allocation for array D failed! \n");
@@ -83,29 +38,25 @@ int main (char *args)
     D[10] = -1;
     D[11] = 27;
 
-    double *E = malloc(i * sizeof(double));
+    double *E = malloc(m * sizeof(double));
     if (E == NULL)
     {
         fprintf(stderr, "Memory allocation for array E failed! \n");
         return -1;
     }
-    for (int it = 0; it < j; it++)
+    for (int i = 0; i < m; i++)
     {
-        E[it] = 0;
+        E[i] = 0;
     }
 
-    gauss_elimination(D, i, E);
+    gauss_elimination(D, m, E);
 
     // Free variables after use
     free(D);
-    free(E);
-    D = NULL;
-    E = NULL;
 
-
-    i = 3; // Rows for F-matrix and G-vector.
-    j = 4; // Columns for F-matrix
-    double *F = malloc(i * j * sizeof(double));
+    m = 3; // Rows for F-matrix and G-vector.
+    n = 4; // Columns for F-matrix
+    double *F = malloc(m * n * sizeof(double));
     if (F == NULL)
     {
         fprintf(stderr, "Memory allocation for array F failed! \n");
@@ -128,25 +79,26 @@ int main (char *args)
     F[10] = 7;
     F[11] = 10;
 
-    double *G = malloc(i * sizeof(double));
+    double *G = malloc(m * sizeof(double));
     if (G == NULL)
     {
         fprintf(stderr, "Memory allocation for array E failed! \n");
         return -1;
     }
-    for (int it = 0; it < j; it++)
+    for (int i = 0; i < m; i++)
     {
-        G[it] = 0;
+        G[i] = 0;
     }
 
-    gauss_elimination(F, i, G);
+    gauss_elimination(F, m, G);
 
-    double *H = malloc(i * j * sizeof(double));
-
-
-    // Free variables after use.
     free(F);
+
+    // Free solution variables after use.
+    free(E);
     free(G);
+    D = NULL;
+    E = NULL;
     F = NULL;
     G = NULL;
 

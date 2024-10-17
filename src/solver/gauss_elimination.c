@@ -12,17 +12,29 @@ int gauss_elimination (double *A, int m, double *B)
         Performs Gauss Elimination on a augmented matrix.
         The matrix must be m-rows and n = m + 1 columns.
     */
-    int forw = forward_elimination(A, m);
-    int back = backwards_substitution(A, m, B);
+    printf("-------------------------------------------------------------\n");
+    printf("Input augmented matrix: \n");
+    print_matrix(A, m, m + 1);
 
-    return 0;
+    if (forward_elimination(A, m)) 
+    {
+        printf("Could not perform forwards elimination on matrix. \n");
+        return EXIT_FAILURE;
+    }
+    if (backwards_substitution(A, m, B))
+    {
+        printf("Could not perform backwards substitution on matrix. \n");
+        return EXIT_FAILURE;        
+    }
+    printf("Result of the system: \n");
+    print_matrix(B, m, 1);
+    printf("-------------------------------------------------------------\n");
+    return EXIT_SUCCESS;
 }
 
 int forward_elimination (double *A, int m)
 {
     int n = m + 1;
-    printf("Forwards elimination. \nInput matrix: \n");
-    print_matrix(A, m, m+1);
     for (int i = 0; i < m; i++)
     {
         // Perform partial pivoting
@@ -57,7 +69,7 @@ int forward_elimination (double *A, int m)
         if (p == 0)
         {
             fprintf(stderr, "Matrix is singular or nearly singular! \n");
-            return -1;
+            return EXIT_FAILURE;
         }
         for (int j = 0; j <= m; j++)
         {
@@ -73,13 +85,9 @@ int forward_elimination (double *A, int m)
                 *(A + j * n + k) -= f * *(A + i * n + k);
             }
         }
-
-
-        printf("Forwards elimination, step: %d \n", i);
-        print_matrix(A, m, n);
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 
@@ -95,8 +103,5 @@ int backwards_substitution (double *A, int m, double *B)
         }
     }
 
-    printf("Resulting matrix: \n");
-    print_matrix(B, m, 1);
-
-    return 0;
+    return EXIT_SUCCESS;
 }
