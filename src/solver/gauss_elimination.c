@@ -6,30 +6,34 @@
 #include "gauss_elimination.h"
 #include "matrix_utils.h"
 
+// Function prototypes that are limited access to only this file.
+int forward_elimination (double *A, int m);
+int backwards_substitution (double *A, int m, double *B);
+
 int gauss_elimination (double *A, int m, double *B)
 {
     /*
         Performs Gauss Elimination on a augmented matrix.
         The matrix must be m-rows and n = m + 1 columns.
     */
-    printf("-------------------------------------------------------------\n");
-    printf("Input augmented matrix: \n");
+    printf("---------------------------------------------\n");
+    printf("Gauss Elimination: \n\nInput augmented matrix: \n");
     print_matrix(A, m, m + 1);
 
     if (forward_elimination(A, m)) 
     {
-        printf("Could not perform forwards elimination on matrix. \n");
-        return EXIT_FAILURE;
+        printf("Could not perform forwards elimination on matrix. \n---------------------------------------------\n");
+        return 1;
     }
     if (backwards_substitution(A, m, B))
     {
-        printf("Could not perform backwards substitution on matrix. \n");
-        return EXIT_FAILURE;        
+        printf("Could not perform backwards substitution on matrix. \n---------------------------------------------\n");
+        return 1;        
     }
     printf("Result of the system: \n");
     print_matrix(B, m, 1);
-    printf("-------------------------------------------------------------\n");
-    return EXIT_SUCCESS;
+    printf("---------------------------------------------\n\n");
+    return 0;
 }
 
 int forward_elimination (double *A, int m)
@@ -43,9 +47,10 @@ int forward_elimination (double *A, int m)
         {
             double a = *(A + k * n + i);
             double b = *(A + max * n + i);
-            /* If the item in the first row at the i-th column is larger than the same column item for the row below, swap the rows.
-               This will loop through for all the values, however moving along the diagonal. 
-               The loop will continue till the largest possible value exists on the diagonal for each variable (however, favoring the first variables)
+            /* 
+                If the item in the first row at the i-th column is larger than the same column item for the row below, swap the rows.
+                This will loop through for all the values, however moving along the diagonal. 
+                The loop will continue till the largest possible value exists on the diagonal for each variable (however, favoring the first variables)
             */
             if (fabs(a) > fabs(b))
             {
@@ -69,7 +74,7 @@ int forward_elimination (double *A, int m)
         if (p == 0)
         {
             fprintf(stderr, "Matrix is singular or nearly singular! \n");
-            return EXIT_FAILURE;
+            return 1;
         }
         for (int j = 0; j <= m; j++)
         {
@@ -87,7 +92,7 @@ int forward_elimination (double *A, int m)
         }
     }
 
-    return EXIT_SUCCESS;
+    return 0;
 }
 
 
@@ -103,5 +108,5 @@ int backwards_substitution (double *A, int m, double *B)
         }
     }
 
-    return EXIT_SUCCESS;
+    return 0;
 }

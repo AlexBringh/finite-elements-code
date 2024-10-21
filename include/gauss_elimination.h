@@ -5,7 +5,5 @@
 #include <math.h>
 
 int gauss_elimination (double *A, int m, double *B);
-int forward_elimination (double *A, int m);
-int backwards_substitution (double *A, int m, double *B);
 
 #endif
