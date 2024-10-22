@@ -4,6 +4,6 @@
 #include <stdio.h>
 #include <math.h>
 
-int croutReduction (double *A, int m, double *x);
+int croutReduction (double *A, int m, double *x, double *B);
 
 #endif

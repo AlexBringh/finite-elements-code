@@ -12,7 +12,7 @@ void printMatrix (double *A, int m, int n)
         for (int j = 0; j < n; j++)
         {
             double a = *(A + n*i + j);
-            printf("%.2f\t", a);
+            printf("%.3f\t", a);
         }
         printf("\n");
     }

@@ -18,20 +18,20 @@ int gaussElimination (double *A, int m, double *x)
     */
     printf("---------------------------------------------\n");
     printf("Gauss Elimination: \n\nInput augmented matrix: \n");
-    print_matrix(A, m, m + 1);
+    printMatrix(A, m, m + 1);
 
-    if (forward_elimination(A, m)) 
+    if (forwardElimination(A, m)) 
     {
-        printf("Could not perform forwards elimination on matrix. \n---------------------------------------------\n");
+        printf("Error (gaussElimination): Could not perform forwards elimination on matrix. \n---------------------------------------------\n");
         return 1;
     }
-    if (backwards_substitution(A, m, x))
+    if (backwardsSubstitution(A, m, x))
     {
-        printf("Could not perform backwards substitution on matrix. \n---------------------------------------------\n");
+        printf("Error (gaussElimination): Could not perform backwards substitution on matrix. \n---------------------------------------------\n");
         return 1;        
     }
     printf("Result of the system: \n");
-    print_matrix(x, m, 1);
+    printMatrix(x, m, 1);
     printf("---------------------------------------------\n\n");
     return 0;
 }
@@ -73,7 +73,7 @@ int forwardElimination (double *A, int m)
         double p = *(A + i * n + i);
         if (p == 0)
         {
-            fprintf(stderr, "Matrix is singular or nearly singular! \n");
+            fprintf(stderr, "Error (gaussElimination): Matrix is singular or nearly singular! \n");
             return 1;
         }
         for (int j = 0; j <= m; j++)

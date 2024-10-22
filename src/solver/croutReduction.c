@@ -7,7 +7,13 @@
 #include "croutReduction.h"
 #include "matrixUtils.h"
 
-int croutReduction (double *A, int m, double *x)
+// Function prototypes that are limited access to only this file.
+void partialPivot (double *A, int m, double *P, int k);
+int luDecomposition (double *A, int m, double *L, double *U, double *P);
+int forwardSubstitution (double *B, int m, double *L, double *U, double *y);
+int backwardSubstitution (double *x, double *y, double *U, int m);
+
+int croutReduction (double *A, int m, double *x, double *B)
 {
     int n = m; // n represents the columns of the A-matrix.
 
@@ -15,7 +21,7 @@ int croutReduction (double *A, int m, double *x)
     double *L = malloc(m * n * sizeof(double));
     if (L == NULL)
     {
-        fprintf(stderr, "Memory allocation for array L failed! \n");
+        fprintf(stderr, "Error (croutReduction): Memory allocation for array L failed! \n");
         return 1;
     }
 
@@ -23,7 +29,7 @@ int croutReduction (double *A, int m, double *x)
     double *U = malloc(m * n * sizeof(double));
     if (U == NULL)
     {
-        fprintf(stderr, "Memory allocation for array U failed! \n");
+        fprintf(stderr, "Error (croutReduction): Memory allocation for array U failed! \n");
         return 1;
     }
 
@@ -31,28 +37,142 @@ int croutReduction (double *A, int m, double *x)
     double *y = malloc(m * sizeof(double));
     if (y == NULL)
     {
-        fprintf(stderr, "Memory allocation for array y failed! \n");
+        fprintf(stderr, "Error (croutReduction): Memory allocation for array y failed! \n");
+        return 1;
     }
+
+    // Allocate memory slots for the permutation (P) vector.
+    double *P = malloc(m * sizeof(double));
+    if (P == NULL)
+    {
+        fprintf(stderr, "Error (croutReduction): Memory allocation for array P failed! \n");
+        return 1;
+    }
+    // Init the permutation vector
+    for (int i = 0; i < m; i++)
+    {
+        *(P + i) = i;
+    }
+
+    luDecomposition(A, m, L, U, P);
 
     free(L);
     free(U);
     free(y);
+    free(P);
 
     L = NULL;
     U = NULL;   
     y = NULL;
+    P = NULL;
 
     return 0;
 }
 
-int init_L_matrix (double *A, int m, double *L, double *U)
+void partialPivot (double *A, int m, double *P, int k)
 {
-    return 0;
+    /*
+        Partial pivots the A-matrix and correspondingly the B-vector so that the largest values for the i-th column will go down diagonally. 
+        If the larges value of x2 belongs to the row that also has the largest value of x1, then the value for x1 will be favored so that x1 gets its largest value on the diagonal. 
+        x2 can then have its largest value, excluding the value on the same row as x1, on the next row on the diagonal.
+
+        This process does, unfortuantely add complexity and therefore computation time, however it is absolutely necessary to limit the amount of computational error or algorithm breakdowns caused by potential small values being placed on the diagonal of the L-matrix later.
+    */
+
+    int n = m;
+
+    int maxIndex = k;
+    double maxVal = fabs(*(A + k * n + k));
+    for (int i = k + 1; i < n; i++) {
+        double val = fabs(*(A + i * n + k));
+        if (val > maxVal) {
+            maxIndex = i;
+            maxVal = val;
+        }
+    }
+    
+    if (maxIndex != k) {
+        for (int j = 0; j < n; j++) {
+            double temp = *(A + k * n + j);
+            *(A + k * n + j) = *(A + maxIndex * n + j);
+            *(A + maxIndex * n + j) = temp;
+        }
+        int temp = *(P + k);
+        *(P + k) = *(P + maxIndex);
+        *(P + maxIndex) = temp;
+    }
 }
 
-int init_U_matrix (double *A, int m, double *L, double *U)
+int luDecomposition (double *A, int m, double *L, double *U, double *P)
 {
+    int n = m; // n represents columns.
+
+    // Initialize L and U as matrices of 0s.
+    for (int i = 0; i < m; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            *(L + i*n + j) = 0;
+            *(U + i*n + j) = 0;
+        }
+        *(U + i*n + i) = 1;
+    }
+
+    for (int i = 0; i < m; i++) // i represents the row multiplier for the new matrices
+    {
+        // Partial pivoting at each iteration of the LU-decomposition.
+        partialPivot(A, m, P, i);
+
+        // Compute values for L on the i-th row.
+        for (int j = i; j < n; j++) // j represents the column multiplier for the new matrices.
+        {
+            double lu = 0;
+
+            for (int k = 0; k < i; k++)
+            {
+                lu += *(L + j*n + k) * *(U + k*n + i);
+            }
+            *(L + j*n + i) = *(A + j*n + i) - lu;
+        }
+
+        // Compute values for U on the i-th row.
+        for (int j = i + 1; j < n; j++)
+        {
+            if (*(L + i*n + i) == 0) // In case diagonal value of L_ii is 0, exit function and print an error.
+            {
+                fprintf(stderr, "Error (croutReduction): Could not complete LU-decomposition! Diagonal value of L is 0. \n");
+                return 1;
+            }
+
+            double lu = 0;
+
+            for (int k = 0; k < i; k++)
+            {
+                lu += *(L + i*n + k) * *(U + k*n + j);
+            }
+            *(U + i*n + j) = (*(A + i*n + j) - lu) / (*(L + i*n + i));
+        }
+        
+        // The diagonal on the U-matrix is always 1.
+        *(U + i*n + i) = 1; 
+    }
+
+    printf("\nL-matrix: \n");
+    printMatrix(L, m, n);
+    printf("\nU-matrix: \n");
+    printMatrix(U, m, n);
+    printf("\n");
+
     return 0;
 }
 
+int forwardSubstitution (double *B, int m, double *L, double *U, double *y)
+{
+
+}
+
+int backwardSubstitution (double *x, double *y, double *U, int m)
+{
+
+}
 
