@@ -1,6 +1,6 @@
-#include "matrix_utils.h"
+#include "matrixUtils.h"
 
-void print_matrix (double *A, int m, int n)
+void printMatrix (double *A, int m, int n)
 {
     /*
         Prints the matrix of m x n (row x column) dimension.

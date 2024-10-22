@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "main.h"
-#include "gauss_elimination.h"
-#include "matrix_utils.h"
+#include "gaussElimination.h"
+#include "matrixUtils.h"
 
 int main (char *args)
 {
@@ -49,7 +49,7 @@ int main (char *args)
         E[i] = 0;
     }
 
-    gauss_elimination(D, m, E);
+    gaussElimination(D, m, E);
 
     // Free variables after use
     free(D);
@@ -90,7 +90,7 @@ int main (char *args)
         G[i] = 0;
     }
 
-    gauss_elimination(F, m, G);
+    gaussElimination(F, m, G);
 
     free(F);
 

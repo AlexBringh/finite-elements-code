@@ -4,6 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void print_matrix (double *A, int m, int n);
+void printMatrix (double *A, int m, int n);
 
 #endif
