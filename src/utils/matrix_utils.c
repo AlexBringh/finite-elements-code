@@ -1,11 +1,11 @@
 #include "matrix_utils.h"
 
-int print_matrix (double *A, int m, int n)
+void print_matrix (double *A, int m, int n)
 {
     /*
         Prints the matrix of m x n (row x column) dimension.
     */
-    printf("Matrix (%dx%d) at location: %p \n", m, n, A);
+    printf("Matrix (%dx%d) \n", m, n);
 
     for (int i = 0; i < m; i++)
     {
