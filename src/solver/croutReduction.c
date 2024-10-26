@@ -54,7 +54,18 @@ int croutReduction (double *A, int m, double *x, double *B)
         *(P + i) = i;
     }
 
+    // Print out the input A-matrix and B-vector
+    printf("---------------------------------------------\n");
+    printf("Crout redcution: \n\nInputed A-matrix: \n");
+    printMatrix(A, m, n);
+    printf("Inputed B-matrix: \n");
+    printMatrix(B, m, 1);
+
     luDecomposition(A, m, L, U, P);
+
+    printf("Result of the system: \n");
+    //TODO: UNCOMMENT: printMatrix(x, m, 1);
+    printf("---------------------------------------------\n\n");
 
     free(L);
     free(U);
@@ -136,7 +147,7 @@ int luDecomposition (double *A, int m, double *L, double *U, double *P)
         }
 
         // Compute values for U on the i-th row.
-        for (int j = i + 1; j < n; j++)
+        for (int j = i; j < n; j++)
         {
             if (*(L + i*n + i) == 0) // In case diagonal value of L_ii is 0, exit function and print an error.
             {
@@ -157,9 +168,10 @@ int luDecomposition (double *A, int m, double *L, double *U, double *P)
         *(U + i*n + i) = 1; 
     }
 
-    printf("\nL-matrix: \n");
+
+    printf("L-matrix: \n");
     printMatrix(L, m, n);
-    printf("\nU-matrix: \n");
+    printf("U-matrix: \n");
     printMatrix(U, m, n);
     printf("\n");
 
