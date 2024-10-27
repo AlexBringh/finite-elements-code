@@ -10,11 +10,13 @@
 // Function prototypes that are limited access to only this file.
 void partialPivot (double *A, int m, double *P, int k);
 int luDecomposition (double *A, int m, double *L, double *U, double *P);
+int permutateVectorB (double *B, double *P, int m);
 int forwardSubstitution (double *B, int m, double *L, double *U, double *y);
 int backwardSubstitution (double *x, double *y, double *U, int m);
 
 int croutReduction (double *A, int m, double *x, double *B)
 {
+    // TODO documentation
     int n = m; // n represents the columns of the A-matrix.
 
     // Allocate memory slots for the L-matrix.
@@ -62,6 +64,7 @@ int croutReduction (double *A, int m, double *x, double *B)
     printMatrix(B, m, 1);
 
     luDecomposition(A, m, L, U, P);
+    permutateVectorB(B, P, m);
 
     printf("Result of the system: \n");
     //TODO: UNCOMMENT: printMatrix(x, m, 1);
@@ -116,6 +119,7 @@ void partialPivot (double *A, int m, double *P, int k)
 
 int luDecomposition (double *A, int m, double *L, double *U, double *P)
 {
+    // TODO documentation
     int n = m; // n represents columns.
 
     // Initialize L and U as matrices of 0s.
@@ -168,7 +172,7 @@ int luDecomposition (double *A, int m, double *L, double *U, double *P)
         *(U + i*n + i) = 1; 
     }
 
-
+    // Print the L- and U- matrices, primarily for debugging purposes.
     printf("L-matrix: \n");
     printMatrix(L, m, n);
     printf("U-matrix: \n");
@@ -178,13 +182,44 @@ int luDecomposition (double *A, int m, double *L, double *U, double *P)
     return 0;
 }
 
+int permutateVectorB (double *B, double *P, int m)
+{
+    // TODO documentation
+    // Reserve memory for a temporary array for storing sorted B-values.
+    double *tempB = malloc(m * sizeof(double));
+    if (tempB == NULL)
+    {
+        fprintf(stderr, "Error (croutReduction): Memory allocation for array tempB failed! \n");
+        return 1;
+    }
+
+    // Store values from B into correct slots in tempB.
+    for (int i = 0; i < m; i++)
+    {
+        int iterator = *(P + i); // P stores values from 0 to (m - 1), corresponding to the space that the row was moved to during partial pivoting. This iterator shows what value from B the i-th row should have.
+        *(tempB + i) = *(B + iterator);
+    }
+
+    // Store the values from tempB into the B-array.
+    for (int i = 0; i < m; i++)
+    {
+        *(B + i) = *(tempB + i);
+    }
+
+    // Free the memory and remove the pointer to tempB.
+    free(tempB);
+    tempB = NULL;
+
+    return 0;
+}
+
 int forwardSubstitution (double *B, int m, double *L, double *U, double *y)
 {
-
+    // TODO documentation
 }
 
 int backwardSubstitution (double *x, double *y, double *U, int m)
 {
-
+    // TODO documentation
 }
 
