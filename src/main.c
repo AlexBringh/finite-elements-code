@@ -8,6 +8,9 @@
 
 int main (char *args)
 {
+    /*
+        The entry point of the program.
+    */
     printf("Running Finite Elements Method! \n");
 
     return 0;
