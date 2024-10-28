@@ -6,24 +6,27 @@
 
 #include "croutReduction.h"
 #include "matrixUtils.h"
+#include "printUtils.h"
 
 // Function prototypes that are limited access to only this file.
 void partialPivot (double *A, int m, double *P, int k);
 int luDecomposition (double *A, int m, double *L, double *U, double *P);
 int permutateVectorB (double *B, double *P, int m);
-int forwardSubstitution (double *B, int m, double *L, double *U, double *y);
+int forwardSubstitution (double *B, int m, double *L, double *y);
 int backwardSubstitution (double *x, double *y, double *U, int m);
 
 int croutReduction (double *A, int m, double *x, double *B)
 {
     // TODO documentation
     int n = m; // n represents the columns of the A-matrix.
+    int d = 30; // Constant used for printing the right amount of dashed lines.
 
     // Allocate memory slots for the L-matrix.
     double *L = malloc(m * n * sizeof(double));
     if (L == NULL)
     {
         fprintf(stderr, "Error (croutReduction): Memory allocation for array L failed! \n");
+        printDashedLines(d);
         return 1;
     }
 
@@ -32,6 +35,7 @@ int croutReduction (double *A, int m, double *x, double *B)
     if (U == NULL)
     {
         fprintf(stderr, "Error (croutReduction): Memory allocation for array U failed! \n");
+        printDashedLines(d);
         return 1;
     }
 
@@ -40,6 +44,7 @@ int croutReduction (double *A, int m, double *x, double *B)
     if (y == NULL)
     {
         fprintf(stderr, "Error (croutReduction): Memory allocation for array y failed! \n");
+        printDashedLines(d);
         return 1;
     }
 
@@ -48,6 +53,7 @@ int croutReduction (double *A, int m, double *x, double *B)
     if (P == NULL)
     {
         fprintf(stderr, "Error (croutReduction): Memory allocation for array P failed! \n");
+        printDashedLines(d);
         return 1;
     }
     // Init the permutation vector
@@ -57,18 +63,27 @@ int croutReduction (double *A, int m, double *x, double *B)
     }
 
     // Print out the input A-matrix and B-vector
-    printf("---------------------------------------------\n");
+    printDashedLines(d);
     printf("Crout redcution: \n\nInputed A-matrix: \n");
     printMatrix(A, m, n);
     printf("Inputed B-matrix: \n");
     printMatrix(B, m, 1);
 
+    // Step 1: Decompose the A-matrix into L- and U-matrices (lower- and upper triangular matrices).
     luDecomposition(A, m, L, U, P);
+
+    // Step 2: Permutate the B-vector to orient the vector in accordance with the pivoted L- and U- matrices.
     permutateVectorB(B, P, m);
 
+    // Step 3: Perform forward substitution to obtain the y-vector values.
+    forwardSubstitution(B, m, L, y);
+
+    // Step 4: Perform backward substitution to obtain the x-vector values (the result of the system).
+    backwardSubstitution(x, y, U, m);
+
     printf("Result of the system: \n");
-    //TODO: UNCOMMENT: printMatrix(x, m, 1);
-    printf("---------------------------------------------\n\n");
+    printMatrix(x, m, 1);
+    printDashedLines(d);
 
     free(L);
     free(U);
@@ -213,13 +228,32 @@ int permutateVectorB (double *B, double *P, int m)
     return 0;
 }
 
-int forwardSubstitution (double *B, int m, double *L, double *U, double *y)
+int forwardSubstitution (double *B, int m, double *L, double *y)
 {
     // TODO documentation
+    int n = m;
+    for (int i = 0; i < m; i++)
+    {
+        double ly = 0;
+        for (int j = 0; j < i; j++)
+        {
+            ly += *(L + i*n + j) * *(y + j);
+        }
+        *(y + i) = ( *(B + i) - ly ) / *(L + i*n + i);
+    }
 }
 
 int backwardSubstitution (double *x, double *y, double *U, int m)
 {
     // TODO documentation
+    int n = m;
+    for (int i = n - 1; i >= 0; i--)
+    {
+        double ux = 0;
+        for (int j = i + 1; j < m; j++)
+        {
+            ux += *(U + i*n + j) * *(x + j);
+        }
+        *(x + i) = *(y + i) - ux;
+    }
 }
-
