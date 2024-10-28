@@ -1,5 +1,18 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "testGaussElimination.h"
+
+void testGaussElimination ();
+
+int main ()
+{
+    printf("\nRUNNING TESTS FOR: Gauss Elimination. \n");
+    printf("gaussElimination.c . . . \n");
+
+    testGaussElimination();
+
+    return 0;
+}
 
 void testGaussElimination ()
 {
@@ -9,7 +22,7 @@ void testGaussElimination ()
     if (D == NULL)
     {
         fprintf(stderr, "Memory allocation for array D failed! \n");
-        return -1;
+        exit(1);
     }
 
     D[0] = 1;
@@ -31,7 +44,7 @@ void testGaussElimination ()
     if (E == NULL)
     {
         fprintf(stderr, "Memory allocation for array E failed! \n");
-        return -1;
+        exit(1);
     }
     for (int i = 0; i < m; i++)
     {
@@ -49,7 +62,7 @@ void testGaussElimination ()
     if (F == NULL)
     {
         fprintf(stderr, "Memory allocation for array F failed! \n");
-        return -1;
+        exit(1);
     }
     
     // Make init variable and 
@@ -72,7 +85,7 @@ void testGaussElimination ()
     if (G == NULL)
     {
         fprintf(stderr, "Memory allocation for array E failed! \n");
-        return -1;
+        exit(1);
     }
     for (int i = 0; i < m; i++)
     {
