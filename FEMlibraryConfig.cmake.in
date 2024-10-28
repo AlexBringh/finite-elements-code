@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Add find_dependency() calls here for any dependencies for the project
+# e.g., find_dependency(SomeDependency REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/FEMlibraryTargets.cmake")

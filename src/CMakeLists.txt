@@ -21,3 +21,16 @@ if (BUILD_ALL)
     add_subdirectory(math)
     add_subdirectory(utils)
 endif ()
+
+
+# Make library for tests
+file(GLOB_RECURSE LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
+add_library(femlibrary STATIC ${LIB_SOURCES})
+# Create a library from the collected source files
+
+# Specify the include directories for the library target
+target_include_directories(femlibrary PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
