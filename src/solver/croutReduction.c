@@ -241,6 +241,8 @@ int forwardSubstitution (double *B, int m, double *L, double *y)
         }
         *(y + i) = ( *(B + i) - ly ) / *(L + i*n + i);
     }
+
+    return 0;
 }
 
 int backwardSubstitution (double *x, double *y, double *U, int m)
@@ -256,4 +258,6 @@ int backwardSubstitution (double *x, double *y, double *U, int m)
         }
         *(x + i) = *(y + i) - ux;
     }
+
+    return 0;
 }
