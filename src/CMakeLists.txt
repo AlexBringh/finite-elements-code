@@ -16,10 +16,25 @@ if (BUILD_WITH_UTILS)
     add_subdirectory(utils)
 endif ()
 
+if (BUILD_WITH_DATA)
+    add_subdirectory(data)
+endif ()
+
+if (BUILD_WITH_ELASTICITY)
+    add_subdirectory(elasticity)
+endif()
+
+if (BUILD_WITH_PLASTICITY)
+    add_subdirectory(plasticity)
+endif()
+
 if (BUILD_ALL)
     add_subdirectory(solver)
     add_subdirectory(math)
     add_subdirectory(utils)
+    add_subdirectory(data)
+    add_subdirectory(elasticity)
+    add_subdirectory(plasticity)
 endif ()
 
 
