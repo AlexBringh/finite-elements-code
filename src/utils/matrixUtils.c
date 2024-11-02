@@ -18,3 +18,32 @@ void printMatrix (double *A, int m, int n)
     }
     printf("\n");
 }
+
+
+int augmentedMatrix (double *Ab, double *A, double *B, int m)
+{
+    /*
+        Makes augmented matrix out of intputed m x m-matrix A, and m x 1-vector B. 
+        The result is stored in the inputed Ab matrix, which must be a m x (m + 1)-matrix.
+    */
+    
+    int n = m + 1;
+
+    // Build the augmented matrix
+    for (int i = 0; i < m; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            if (j < m) // If it is less than m (rows), then we want a value from the original A.
+            {
+                *(Ab + i * n + j) = *(A + i*m + j);
+            }
+            else // If it is equal or higher than m (will only ever be equal), then we want a value from B.
+            {
+                *(Ab + i * n + m) = *(B + i);
+            }
+        }
+    }
+
+    return 0;
+}
