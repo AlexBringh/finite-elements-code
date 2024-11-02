@@ -5,5 +5,6 @@
 #include <stdlib.h>
 
 void printMatrix (double *A, int m, int n);
+int augmentedMatrix (double *Ab, double *A, double *B, int m);
 
 #endif
