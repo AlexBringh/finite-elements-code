@@ -4,5 +4,6 @@
 #include "matrixUtils.h"
 
 void testPrintMatrix ();
+void testAugmentedMatrix ();
 
 #endif
