@@ -6,12 +6,6 @@
 
 #include "skyline.h"
 
-typedef struct
-{
-    int n;
-    double *cellData;
-    int *colIndex;
-} skylineMatrix;
 
 skylineMatrix* initSkylineMatrix (int n)
 {
