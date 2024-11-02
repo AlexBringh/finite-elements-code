@@ -10,9 +10,9 @@ typedef struct
     double *cellData;
     int *colIndex;
 } skylineMatrix;
-skylineMatrix* initSkylineMatrix (int n);
+
+skylineMatrix* initSkylineMatrix (int n, int *startRow);
 int addSkylineElement (skylineMatrix* matrix, int m, int n, double val);
 double getSkylineElement (skylineMatrix* matrix, int m, int n);
-int updateSkylineElement (skylineMatrix* matrix, int m, int n, double val);
 
 #endif
