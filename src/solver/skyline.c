@@ -49,45 +49,92 @@ skylineMatrix* initSkylineMatrix (int n, int *startRow)
         exit(1);
     }
 
+    matrix->colTop = malloc(n * sizeof(int));
+    if (matrix->colTop == NULL)
+    {
+        fprintf(stderr, "Error (skyline): Memory allocation for array 'colTop' failed! \n");
+        exit(1);
+    }
+
     // Store the values for the column index.
     for (int i = 0; i < (n + 1); i++)
     {
-        *(matrix->colIndex + i) = *(startRow + i);
+        *(matrix->colTop + i) = *(startRow + i);
     }
 
-    /* Commented out because this is likely redundant. // TODO: Remove
-    // Transfer the non-zero elements from the A-matrix to the skyline matrix.
-    int c = 0; // Counter for address positioning of cellData
-    for (int i = 0; i < n + 1; i++) // Loop through the columns
+    *(matrix->colIndex) = 0;
+    for (int i = 0; i < n; i++)
     {
-        for (int j = *(matrix->colIndex + i); j <= i; j++) // Start at the stored starting index for the column, and loop through the rows till the diagonal is reached.
-        {
-            *(matrix->cellData + c) = *(A + j*m + i); // The column values are stored next to each other in memory, rather than the row values being next to each other.
-            c++;
-        }
-    }*/
+        *(matrix->colIndex + i + i) = *(matrix->colIndex + i) + (i - *(startRow + i) + 1);
+    }
 
     return matrix;
 }
 
 int addSkylineElement (skylineMatrix* matrix, int m, int n, double val)
 {
-    // TODO: Documentation
+    /*
+    Adds data values to the cells of the skyline matrix, based upon the starting values of the colTop values.
+    */
 
-    int start = (matrix->colIndex + n);
-    int stop = (matrix->colIndex + (n + 1));
-    int pos = start + m;
-
-    if (start <= pos && pos < stop)
+   // Check that the data is within the skyline structure bounds.
+    if (m < *(matrix->colTop + n) || m > n)
     {
-        *(matrix->cellData + pos) = val;
-        return 0;
-    }
-    else 
-    {
-        printf("Error (skyline): Position of skyline profile out of range! \n");
+        fprintf(stderr, "Error (skyline): Could not add element to skyline matrix. Index out of range!");
         return 1;
     }
+
+    // Sett data at index.
+    int index = *(matrix->colIndex + n) + (m - *(matrix->colTop + n));
+    *(matrix->cellData + index) = val; 
+}
+
+int setSkylineElement (skylineMatrix* matrix, int m, int n, double val)
+{
+    // TODO: Documentation
+
+    // Check that the index is valid
+    if (m > n) 
+    {
+        fprintf(stderr, "Error (skyline): Could not set element in skyline matrix. Index out of range!");
+        return 1;
+    }
+
+    // Calculate the target index in the 'data' array.
+    int colOffset = m - *(matrix->colTop + n);
+    int index = *(matrix->colIndex + n) + colOffset;
+
+    // Check that the index pos is within the skyline matrix structure
+    if (m < *(matrix->colTop + n))
+    {
+        // If the row, m, is outside of the skyline rows for this column, shift 'colTop' and reassign the 'colIndex' values.
+        int shift = *(matrix->colTop + n) - m;
+        // Shift 'colTop'
+        *(matrix->colTop + n) = m; 
+        // Reassign / add to colIndex values.
+        for (int k = n; k <= matrix->n; k++)
+        {
+            *(matrix->colIndex + k) += shift;   
+        }
+
+        index = *(matrix->colIndex + n);
+
+        // Reallocate and shift 'data' array.
+        matrix->cellData = realloc(matrix->cellData, sizeof(double) * *(matrix->colIndex + (matrix->n)) - *(matrix->colIndex));
+
+        // Shift the elements in the 'data' array.
+        for (int k = *(matrix->colIndex + (matrix->n)); k > index; k--)
+        {
+            *(matrix->cellData + k) = *(matrix->cellData + k - shift);
+            if (k < index + shift)
+            {
+                *(matrix->cellData + k - shift) = 0; // Init data cell with 0.
+            }
+        }
+    }
+
+    // Insert / update the value for the given cell.
+    *(matrix->cellData + index) = val;
 }
 
 double getSkylineElement (skylineMatrix* matrix, int m, int n)
