@@ -5,8 +5,8 @@
 //
 
 #include "solveCroutSkyline.h"
-#include "skyline.h"
 #include "matrixUtils.h"
+#include "printUtils.h"
 #include <stdio.h>
 #include <stdlib.h>
 
