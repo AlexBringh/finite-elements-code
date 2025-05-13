@@ -1,0 +1,75 @@
+#include "stiffnessMatrix.h"
+#include "matrixArithmetic.h"
+
+int quadBMatrix (double *B, double *Btrans, double *Jinv, double *NiPxi, double *NiPeta)
+{
+    /*
+        TODO: Documentation
+    */
+    int nnodes = 4;
+    double *NiPx = malloc(nnodes * sizeof(double)); // Allocate memory for partial deriv. of shape func., N_i, for global node coord., x, for 4 nodes (for quad mesh.)
+    double *NiPy = malloc(nnodes * sizeof(double)); // Allocate memory for partial deriv. of shape func., N_i, for global node coord., y, for 4 nodes (for quad mesh.)
+
+    // Calculate NiPx and NiPy for all 4 nodes of the element.
+    for (int i = 0; i < nnodes; i++)
+    {
+        *(NiPx + i) = *(Jinv + 0) * *(NiPxi) + *(Jinv + 1) * *(NiPeta + i);
+        *(NiPy + i) = *(Jinv + 2) * *(NiPxi) + *(Jinv + 3) * *(NiPeta + i);
+    }
+
+    // Assemble the B-matrix for the element.
+    for (int i = 0; i < nnodes; i++)
+    {
+        *(B + i * 2) = *(NiPx + i); // First row of the B-matrix.
+        *(B + 9 + i * 2) = *(NiPy + i); // Second row of the B-matrix.
+        *(B + 16 + i * 2) = *(NiPy + i); // Third row, first value of the B-matrix.
+        *(B + 17 + i * 2) = *(NiPx + i); // Third row, second value of the B-matrix.
+    }
+
+    // Assemble the B-transpose for the element.
+    for (int i = 0; i < nnodes; i++)
+    {
+        *(Btrans + i * 3 * 2) = *(NiPx + i); // First column of the B-transpose.
+        *(Btrans + i * 3 * 2 + 4) = *(NiPy + i); // Second column of the B-transpose.
+        *(Btrans + i * 3 * 2 + 2) = *(NiPy + i); // Third column, first value of the B-transpose.
+        *(Btrans + i * 3 * 2 + 5) = *(NiPx + i); // Third column, second value of the B-transpose.
+    }
+
+    free(NiPx);
+    free(NiPy);
+
+    return 0;
+}
+
+int elasticDMatrixPlaneStress ()
+{
+    /*
+        TODO: Documentaiton
+        Good for thin structures where the thickness is small compared to other dimensions and loads are in-plane.
+    */
+}
+
+int elasticDMatrixPlaneStrain ()
+{
+    /*
+        TODO: Documentation
+        Good for thick- or long bodies where the deformation in one direction is negligible.
+    */
+}
+
+int elastoPlasticDMatrix ()
+{
+    /*
+        TODO: Documentation
+    */
+}
+
+int quadElementStiffnessMatrix ()
+{
+
+}
+
+int quadGlobalStiffnessMatrix ()
+{
+
+}
