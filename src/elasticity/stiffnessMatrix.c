@@ -55,6 +55,7 @@ int elasticDMatrixPlaneStrain ()
         TODO: Documentation
         Good for thick- or long bodies where the deformation in one direction is negligible.
     */
+
 }
 
 int elastoPlasticDMatrix ()
@@ -64,9 +65,38 @@ int elastoPlasticDMatrix ()
     */
 }
 
-int quadElementStiffnessMatrix ()
+int quadElementStiffnessMatrix (double *Ke, int gp, int DOF, double *B, double *Btrans, double *D, double detJ, double *weights)
 {
+    /*
+        TODO: Documentation
+    */
+    // Initialize / empty the element stiffness matrix
+    for (int i = 0; i < gp * DOF; i++)
+    {
+        *(Ke + i) = 0;
+    }
 
+    double *Ktemp1 = malloc (8 * 3 * sizeof(double)); // Temp matrix(8x3) for Btrans(8x3) x D(3x3)
+    double *Ktemp2 = malloc (8 * 8 * sizeof(double)); // Temp matrix(8x8) for Ktemp1(8x3) x B(3x8)
+    
+    // Summation of the element stiffness matrix for each Gauss Point, i
+    for (int i = 0; i < gp; i++)
+    {
+        for (int j = 0; j < 8*3; j++) *(Ktemp1 + j) = 0; // Initialize / empty Ktemp1(8x3)
+        for (int j = 0; j < 8*8; j++) *(Ktemp2 + j) = 0; // Initialize / empty Ktemp2(8x8)
+
+        matrixMultiply(Btrans, D, Ktemp1, 8, 3, 3);
+        matrixMultiply(Ktemp1, B, Ktemp2, 8, 3, 8);
+
+        // Multiply the det(J) and weight to each cell of Ktemp2. Add each cell of the current matrix to the element stiffness matrix, Ke.
+        for (int j = 0; j < gp * DOF; j++)
+        {
+            *(Ke + j) += *(Ktemp2 + j) * detJ * *(weights + i);
+        }
+    }
+
+    free(Ktemp1);
+    free(Ktemp2);
 }
 
 int quadGlobalStiffnessMatrix ()

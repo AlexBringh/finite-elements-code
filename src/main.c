@@ -30,12 +30,17 @@ int main (char *args)
 
     // 5: Stiffness Matrix Assembly. -> Form the Global Stiffness Matrix considering updated material properties. -> Include effects of plasticity in the Local Stiffness Matrix calculations.
     
+    // Constant values for the analysis
+    int gp = 4; // Gauss Points per element
+    int DOF = 2; // Degrees of freedom per node / Gauss Point
+
     // Get the shape functions for 2D Quad elements
     int j_m = 2; // Representing the size, m, in a m*m Jacobian matrix.
     double *Ni = malloc(j_m * j_m * sizeof(double));
     double *NiPxi = malloc(j_m * j_m * sizeof(double));
     double *NiPeta = malloc(j_m * j_m * sizeof(double));
-    quadShapeFunction(Ni, NiPxi, NiPeta); // Gets the local shape functions for a quad element. Needs only be ran once.
+    double *weights = malloc(gp * sizeof(double));
+    quadShapeFunction(Ni, NiPxi, NiPeta, weights); // Gets the local shape functions for a quad element. Needs only be ran once.
 
     // Allocate memory for the Jacobian matrix, its determinant and the inverse.
     double *J = malloc(j_m * j_m * sizeof(double)); // This is initialized with values in the Jacobian function.
@@ -46,8 +51,16 @@ int main (char *args)
     int nlocnode = 4; // Number of local nodes per element.
     int Bm = 3; // Rows of the B matrix.
     int Bn = nlocnode * 2; // Each node adds 2 columns to the B-matrix.
+    int Dm = 3;
+    int Dn = 3;
     double *B = malloc(Bn * Bm * sizeof(double)); 
     double *Btrans = malloc(Bn * Bm * sizeof(double));
+    double *D = malloc(Dm * Dn * sizeof(double));
+
+    // Allocate memory for the element stiffness matrix, Ke
+    int Kem = gp * DOF;
+    int Ken = gp * DOF;
+    double *Ke = malloc(Kem * Ken * sizeof(double));
 
     // Allocate memory for the global stiffness matrix, using Skyline.
 
@@ -58,6 +71,10 @@ int main (char *args)
         double *yi;
         quadJacobian(J, Jinv, j_m, detJ, Ni, NiPxi, NiPeta, xi, yi);
         quadBMatrix (B, Btrans, Jinv, NiPxi, NiPeta);
+        // QUADELASTICDMATRIXPLANESTRAIN
+        // QUADELASTOPLASTICDMATRIX
+        quadElementStiffnessMatrix(Ke, gp, DOF, B, Btrans, D, *detJ, weights);
+
     }
 
     // Freeing some variables from memory now that they are no longer needed.
@@ -69,6 +86,8 @@ int main (char *args)
     free(Jinv); // Inverse matrix of the Jacobian.
     free(B); // B matrix
     free(Btrans); // B transpose
+    free(D);
+    free(Ke); // Ke. element stiffness matrix
 
 
     // ASSEMBLE THE GLOBAL STIFFNESS MATRIX AFTER EVERY ELEMENT STIFFNESS MATRIX HAS BEEN FOUND.

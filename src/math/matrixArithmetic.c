@@ -46,7 +46,7 @@ int matrixMultiply (double *A, double *B, double *C, int m, int n, int h)
 {
     /*
         Multiplies 2 matrices together (A x B) and stores the result in the matrix C as a m x h (row x column) matrix.
-        A must be a m x n matrix (row x column), whilst B must be a n x o (row x column) matrix.
+        A must be a m x n matrix (row x column), whilst B must be a n x h (row x column) matrix.
     */
 
     for (int i = 0; i < m; i++)

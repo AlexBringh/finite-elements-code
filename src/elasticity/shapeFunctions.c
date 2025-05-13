@@ -2,7 +2,7 @@
 
 #include "shapeFunctions.h"
 
-int quadShapeFunction (double *Ni, double *NiPxi, double *NiPeta)
+int quadShapeFunction (double *Ni, double *NiPxi, double *NiPeta, double *weights)
 {
     /*
         Input value *Ni should be a pointer with allocated enough memory for 4 double values.
@@ -16,10 +16,11 @@ int quadShapeFunction (double *Ni, double *NiPxi, double *NiPeta)
     // TODO: Documentation
 
     // Define Gaussian Weights for quad elements in 2D space.
-    int nnodes = 4;
-    int dimensions = 2;
-    double *weights = malloc(nnodes * sizeof(double));
-    for (int i = 0; i < nnodes; i++)
+    int gp = 4;
+    int DOF = 2;
+    
+    // Weights
+    for (int i = 0; i < gp; i++)
     {
         *(weights + i) = 1.0; // All four Gauss points will have the value of 1.0.
     }
