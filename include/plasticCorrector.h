@@ -1,4 +1,0 @@
-#ifndef PLASTICCORRECTOR_h
-#define PLASTICCORRECTOR_H
-
-#endif

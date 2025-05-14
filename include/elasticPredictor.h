@@ -1,4 +1,0 @@
-#ifndef ELASTICPREDICTOR_H
-#define ELASTICPREDICTOR_H
-
-#endif

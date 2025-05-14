@@ -93,8 +93,7 @@ int main (char *args)
     free(D);
     free(Ke); // Ke. element stiffness matrix
 
-    /*
-    
+    /*    
     Step 1: Import and initialize Data
         - Load input data: Node coords, Element connectivity, Boundary conditions, Applied load vectors, Material properties (E, v, sigma_yield_0, H)
         - Compute and store shape functions and its derivatives in the reference space (xi, eta) (static values)
