@@ -64,6 +64,14 @@ int main (char *args)
 
     // Allocate memory for the global stiffness matrix, using Skyline.
 
+
+    // Newton-Raphson Iterator
+    int maxIterations = 100;
+    for (int k = 0; k < maxIterations; k++)
+    {
+
+    }
+
     int nelements = 100; // PLACEHOLDER VALUE.
     for (int i = 0; i < nelements; i++) // Loop through each element and find the local Jacobian matrix, its determinant, the B-matrix, the B-transpose, the D-matrix, and calculate the element stiffness matrix. 
     {
