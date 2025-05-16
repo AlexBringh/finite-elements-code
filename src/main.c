@@ -44,10 +44,13 @@ int main (char *args)
         - Compute the trial stress as sigma_trial = D_e (epsilon - epsilon_p)
         - From the trial stress, calculate the trial deviatoric stress and the von Mises equivalent stress
         - Check the trial stress against the yield function f = sigma_eq - sigma_y, where sigma_y = sigma_y0 + H * epsilon_bar_p
-        - If f > 0 -> Plasticity (comput delta gamma, n, and D_ep), if f <= 0 -> elasticity (use D_e)
+        - If f > 0 -> Plasticity (compute delta gamma, n, and D_ep), if f <= 0 -> elasticity (use D_e)
             - if f > 0 -> Compute delta gamma = f_yield / (3 G + H)
             - G = E / (2(1+v))
             - Correct stress on Gauss point as sigma = sigma_trial - 2 G * delta gamma * n
+            - Make trial epsilon_p = epsilon_p_stored + delta gamma * n
+            - Make trial epsilon_bar_p = epsilon_bar_stored_p + delta gamma * sqrt(2/3)
+                - THESE 3 VARIABLES, SIGMA, TRIAL EPSILON_P AND TRIAL_EPSILON_BAR_P ARE ONLY COMMITED AFTER CONVERGENCE CHECK.
     
     Step 5: Compute Local Element Quantities (could be included in step 4 since it is still in each element loop)
         - Compute K_e = sum(gp) Btrans D(e / ep determined in step 4) B * detJ * weight(gp)
