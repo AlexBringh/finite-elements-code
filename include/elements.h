@@ -7,7 +7,7 @@ typedef struct {
     int gp; // Number of Gauss Points
     int nnodes; // Number of nodes
     int dof; // Degrees of freedom per node
-    int *connectivity; // Node connectivity numbering
+    int *nodeids; // Node connectivity numbering
     int *coords; // Global coordinates of connected nodes.
 
     // Accumulated stress and plastic strain.

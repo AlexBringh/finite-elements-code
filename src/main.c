@@ -84,6 +84,7 @@ int main (char *args)
     // Constant values for the analysis
     int gp = 4; // Gauss Points per element
     int nelements = 100; // Number of elements in the mesh.
+    int nodeselement = 4; // Nodes per element
     int nnodes = 200; // Number of nodes in the mesh.
     int DOF = 2; // Degrees of freedom per node
     int Km = nnodes * DOF; // Number of rows / columns of the global stiffness matrix.
@@ -91,9 +92,10 @@ int main (char *args)
     // Allocate memory for the 'element' structs.
     quadElement *element = malloc(nelements * sizeof(quadElement));
 
-    // Allocate memory for the global displacement vector.
+    // Allocate memory for the global-, increment- and element displacement vector.
     double *u = malloc(nnodes * DOF * sizeof(double));
     double *du = malloc(nnodes * DOF * sizeof(double));
+    double *ue = malloc(nodeselement * DOF * sizeof(double));
 
     // Get the shape functions for 2D Quad elements
     int j_m = 2; // Representing the size, m, in a m*m Jacobian matrix.
@@ -101,7 +103,7 @@ int main (char *args)
     double *NiPxi = malloc(j_m * j_m * sizeof(double));
     double *NiPeta = malloc(j_m * j_m * sizeof(double));
     double *weights = malloc(gp * sizeof(double));
-    quadShapeFunction(Ni, NiPxi, NiPeta, weights); // Gets the local shape functions for a quad element. Needs only be ran once.
+    quadShapeFunction(Ni, NiPxi, NiPeta, weights); // Gets the shape functions for a 2D quad element. Needs only be ran once.
 
     // Allocate memory for the Jacobian matrix, its determinant and the inverse.
     double *J = malloc(j_m * j_m * sizeof(double)); // This is initialized with values in the Jacobian function.
@@ -120,11 +122,15 @@ int main (char *args)
 
     // Allocate memory for the element stiffness matrix, Ke
     int Kem = gp * DOF;
-    int Ken = gp * DOF;
+    int Ken = Kem;
     double *Ke = malloc(Kem * Ken * sizeof(double));
 
-    // Allocate memory for the global stiffness matrix, using Skyline.
+    // Check how many nodes and degrees of freedom there are. If less than threshold, use normal matrix. If over threshold, use Skyline.
+    // Allocate memory for the global stiffness matrix, (using Skyline).
 
+
+    // Variables used in the Newton-Raphson iteration.
+    int nodeID;
 
     // Newton-Raphson Iterator
     printf("Starting Newton-Raphson iteration.");
@@ -133,6 +139,38 @@ int main (char *args)
     {
         printf("Running step: %1d . . . \n", k);
 
+        // Apply load increment
+
+        // Loop through all elements
+        for (int e = 0; e < nelements; e++)
+        {
+            printf("\tIn step: %1d . . . Analysing element #%1d . . . \n", k, e);
+
+            // Init K_e for current element
+            for (int i = 0; i < Kem; i++)
+            {
+                for (int j = 0; j < Kem; j++)
+                {
+                    *(Ke + i * Kem + j) = 0; // Sets all the values of the element stiffness matrix to 0.
+                }
+            }
+
+            // Get the displacements for the element's nodes, u_e, and store them. One value for each DOF.
+            for (int i = 0; i < nodeselement * DOF; i++)
+            {
+                nodeID = *(element->nodeids + i); // Get the i-th node id stored in the element.
+                *(ue + i) = *(u + nodeID); // Store the displacement from the node with this id.
+            }
+
+            // Begin looping over the Gauss Points of the elements
+            for (int i = 0; i < element->gp; i++)
+            {
+                printf("\t\tElement #%1d . . . Gauss Point #%1d", e, i);
+
+
+            }
+
+        }
     }
 
     for (int i = 0; i < nelements; i++) // Loop through each element and find the local Jacobian matrix, its determinant, the B-matrix, the B-transpose, the D-matrix, and calculate the element stiffness matrix. 

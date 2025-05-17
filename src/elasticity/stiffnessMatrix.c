@@ -146,12 +146,12 @@ int globalStiffnessMatrix (double *K, double *Ke, quadElement *element, int Km, 
     // Allocate memory for array to hold global degrees of freedom indices.
     int *globDOFs = malloc (nnodes * dof * sizeof(int));
 
-    // Calculate and store global degrees of freedom indices from each of the nodes ids stored in the connectivity array.
+    // Calculate and store global degrees of freedom indices from each of the nodes ids stored in the 'nodeids' array.
     for (int i = 0; i < nnodes; i++)
     {
         for (int j = 0; j < dof; j++)
         {
-            *(globDOFs + i * dof + j) = *(element->connectivity + i) * dof + j;
+            *(globDOFs + i * dof + j) = *(element->nodeids + i) * dof + j;
         }
     }
 
