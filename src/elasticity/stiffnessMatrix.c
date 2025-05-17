@@ -1,5 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "stiffnessMatrix.h"
 #include "matrixArithmetic.h"
+#include "elements.h"
 
 int quadBMatrix (double *B, double *Btrans, double *Jinv, double *NiPxi, double *NiPeta)
 {
@@ -99,7 +103,82 @@ int quadElementStiffnessMatrix (double *Ke, int gp, int DOF, double *B, double *
     free(Ktemp2);
 }
 
-int quadGlobalStiffnessMatrix ()
+int getElementDOFs (int dof, int nelements)
 {
 
 }
+
+int globalStiffnessMatrixSkyline ()
+{
+
+}
+
+int initGlobalStiffnessMatrix (double *K, int Km)
+{
+    /*
+        Sets all values of the global stiffness matrix to 0. Used for initializing and clearing the global stiffness matrix.
+        Cannot be used for Skylie Matrix structures.
+
+        Inputs:
+        double *K -> pointer to global stiffness matrix in array-form.K
+        int Km -> number of columns (rows) of the matrix.
+    */
+    for (int i = 0; i < Km; i++)
+    {
+        for (int j = 0; j < Km; j++)
+        {
+            *(K + i * Km + j) = 0;
+        }
+    }
+}
+
+int globalStiffnessMatrix (double *K, double *Ke, quadElement *element, int Km, int Kem)
+{
+    /*
+        TODO: Documentation
+    */
+    //
+
+    // Dereference values from the current element.
+    int dof = element->dof;
+    int nnodes = element->nnodes;
+
+    // Allocate memory for array to hold global degrees of freedom indices.
+    int *globDOFs = malloc (nnodes * dof * sizeof(int));
+
+    // Calculate and store global degrees of freedom indices from each of the nodes ids stored in the connectivity array.
+    for (int i = 0; i < nnodes; i++)
+    {
+        for (int j = 0; j < dof; j++)
+        {
+            *(globDOFs + i * dof + j) = *(element->connectivity + i) * dof + j;
+        }
+    }
+
+    int Ki; // Row indices for K
+    int Kj; // Col indices for K
+
+    // Assemble the global stiffness matrix
+    for (int i = 0; i < Km; i++)
+    {
+        Ki = *(globDOFs + i); // Row indices for K
+        for (int j = 0; j < Km; j++)
+        {
+
+            // Check that indices are not out of bounds for the global stiffness matrix.
+            if (Ki >= Km || Kj >= Km) 
+            {
+                fprintf(stderr, "Index out of bounds: Ki=%d, Kj=%d\n", Ki, Kj);
+                return 1;
+            }
+
+            Kj = *(globDOFs + j); // Column indices for K
+
+            // K[Ki][Kj] += Ke[i][j];
+            *(K + Ki * Km + Kj) += *(Ke + i * Kem + j);
+        }
+    }
+
+    free(globDOFs);
+}
+
