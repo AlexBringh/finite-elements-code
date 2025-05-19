@@ -2,7 +2,7 @@
 
 #include "shapeFunctions.h"
 
-int quadShapeFunction (double *Ni, double *NiPxi, double *NiPeta, double *weights)
+int quadShapeFunction (shapeFunctions2D *sf)
 {
     /*
         Input value *Ni should be a pointer with allocated enough memory for 4 double values.
@@ -15,46 +15,58 @@ int quadShapeFunction (double *Ni, double *NiPxi, double *NiPeta, double *weight
     */
     // TODO: Documentation
 
-    // Define Gaussian Weights for quad elements in 2D space.
+
+    // Define constants for 2D quad elements.
     int gp = 4;
     int DOF = 2;
-    
-    // Weights
+    int dim = 2;
+    int nnodes = 4;
+
+    // Allocate memory for the struct
     for (int i = 0; i < gp; i++)
     {
-        *(weights + i) = 1.0; // All four Gauss points will have the value of 1.0.
+        sf[i].Ni = malloc(nnodes * sizeof(double));
+        sf[i].NiPxi = malloc(nnodes * sizeof(double));
+        sf[i].NiPeta = malloc(nnodes * sizeof(double));
     }
 
-    // Gauss Points
-    double xi1  =  -1 / sqrt(3); // xi of the first Gauss point
-    double eta1 =  -1 / sqrt(3); // eta of the first Gauss point
-    double xi2  =   1 / sqrt(3); // xi of the second Gauss point
-    double eta2 =  -1 / sqrt(3); // eta of the second Gauss point
-    double xi3  =   1 / sqrt(3); // xi of the third Gauss point
-    double eta3 =   1 / sqrt(3); // eta of the third Gauss point
-    double xi4  =   1 / sqrt(3); // xi of the fourth Gauss point
-    double eta4 =  -1 / sqrt(3); // eta of the fourth Gauss point
+    double *xi = malloc(gp * sizeof(double));
+    double *eta = malloc(gp * sizeof(double));
 
-    // Calculate the local shape functions of a 2D quad mesh element.
-    *(Ni + 0) = 1 / 4 * (1 - xi1) * (1 - eta1); // N1
-    *(Ni + 1) = 1 / 4 * (1 + xi2) * (1 - eta2); // N2
-    *(Ni + 2) = 1 / 4 * (1 + xi3) * (1 + eta3); // N3
-    *(Ni + 3) = 1 / 4 * (1 - xi4) * (1 - eta4); // N4
+    *(xi + 0) = -1 / sqrt(3);
+    *(xi + 1) =  1 / sqrt(3);
+    *(xi + 2) =  1 / sqrt(3);
+    *(xi + 3) = -1 / sqrt(3);
 
-    // Calculate the partial derivatives of the local shape functions with respects to xi.
-    *(NiPxi + 0) = -1 / 4 * (1 - eta1); // N1Pxi
-    *(NiPxi + 1) =  1 / 4 * (1 - eta2); // N2Pxi
-    *(NiPxi + 2) =  1 / 4 * (1 + eta3); // N3Pxi
-    *(NiPxi + 3) = -1 / 4 * (1 + eta4); // N4Pxi
-
-    // Calculate the partial derivatives of the local shape functions with respects to eta.
-    *(NiPeta + 0) = -1 / 4 * (1 - xi1); // N1Peta
-    *(NiPeta + 1) = -1 / 4 * (1 + xi2); // N1Peta
-    *(NiPeta + 2) =  1 / 4 * (1 + xi3); // N1Peta
-    *(NiPeta + 3) =  1 / 4 * (1 - xi4); // N1Peta
+    *(eta + 0) = -1 / sqrt(3);
+    *(eta + 1) = -1 / sqrt(3);
+    *(eta + 2) =  1 / sqrt(3);
+    *(eta + 3) =  1 / sqrt(3);
 
 
-    free(weights);
+    // Loop through each Gauss Point
+    for (int i = 0; i < gp; i++)
+    {
+        sf[i].Ni[0] = 1 / 4 * (1 - *(xi + i)) * (1 - *(eta + i)); // N1
+        sf[i].Ni[1] = 1 / 4 * (1 + *(xi + i)) * (1 - *(eta + i)); // N2
+        sf[i].Ni[2] = 1 / 4 * (1 + *(xi + i)) * (1 + *(eta + i)); // N3
+        sf[i].Ni[3] = 1 / 4 * (1 - *(xi + i)) * (1 + *(eta + i)); // N4
+
+        sf[i].NiPxi[0] = - 1 / 4 * (1 - *(eta + i)); // N1Pxi
+        sf[i].NiPxi[1] =   1 / 4 * (1 - *(eta + i)); // N2Pxi
+        sf[i].NiPxi[2] =   1 / 4 * (1 + *(eta + i)); // N3Pxi
+        sf[i].NiPxi[3] = - 1 / 4 * (1 + *(eta + i)); // N4Pxi
+
+        sf[i].NiPeta[0] = - 1 / 4 * (1 - *(xi + i)); // N1Peta
+        sf[i].NiPeta[1] = - 1 / 4 * (1 + *(xi + i)); // N2Peta
+        sf[i].NiPeta[2] =   1 / 4 * (1 + *(xi + i)); // N3Peta
+        sf[i].NiPeta[3] =   1 / 4 * (1 - *(xi + i)); // N4Peta
+
+        sf[i].weight = 1.0; // w, integration weight
+    }
+
+    free(xi);
+    free(eta);
 }
 
 int triangularShapeFunction ()
@@ -63,6 +75,22 @@ int triangularShapeFunction ()
         Not yet implemented for this code. Only 2D quad elements are supported for now.
     */
 }
+
+void print2DShapeFunctions (shapeFunctions2D *sf, int gp)
+{
+    printf("Shape functions for %1d Gauss Point(s). \nNi\tNiPxi\tNiPeta\tWeight\n", gp);
+    for (int i = 0; i < gp; i++)
+    {
+        //double NiValue = *(Ni + i);
+        //double NiPxiValue = *(NiPxi + i);
+        //double NiPetaValue = *(NiPeta + i);
+        //double weightValue = *(weights + i);
+        //printf("%.4f\t%.4f\t%.4f\t%.4f\n");
+    }
+    printf("End of shape functions. \n\n");
+}
+
+
 
 int hexShapeFunction ()
 {

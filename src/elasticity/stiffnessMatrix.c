@@ -45,21 +45,32 @@ int quadBMatrix (double *B, double *Btrans, double *Jinv, double *NiPxi, double 
     return 0;
 }
 
-int elasticDMatrixPlaneStress ()
+int elasticDMatrixPlaneStress (double *D, double E, double v)
 {
     /*
         TODO: Documentaiton
         Good for thin structures where the thickness is small compared to other dimensions and loads are in-plane.
     */
+   // TODO: Implementation
 }
 
-int elasticDMatrixPlaneStrain ()
+int elasticDMatrixPlaneStrain (double *D, double E, double v)
 {
     /*
         TODO: Documentation
         Good for thick- or long bodies where the deformation in one direction is negligible.
     */
+    double multiplier = E * (1 - v) / ((1 + v) * (1 - 2 * v));
 
+    *(D + 0) = multiplier * 1;
+    *(D + 1) = multiplier * v / (1 - v);
+    *(D + 2) = 0;
+    *(D + 3) = multiplier * v / (1 - v);
+    *(D + 4) = multiplier * 1;
+    *(D + 5) = 0;
+    *(D + 6) = 0;
+    *(D + 7) = 0;
+    *(D + 8) = (1 - 2 * v) / (2 * (1 - v));
 }
 
 int elastoPlasticDMatrix ()
@@ -69,16 +80,11 @@ int elastoPlasticDMatrix ()
     */
 }
 
-int quadElementStiffnessMatrix (double *Ke, int gp, int DOF, double *B, double *Btrans, double *D, double detJ, double *weights)
+int quadElementStiffnessMatrix (double *Ke, int gp, int DOF, double *B, double *Btrans, double *D, double detJ, double weight)
 {
     /*
         TODO: Documentation
     */
-    // Initialize / empty the element stiffness matrix
-    for (int i = 0; i < gp * DOF; i++)
-    {
-        *(Ke + i) = 0;
-    }
 
     double *Ktemp1 = malloc (8 * 3 * sizeof(double)); // Temp matrix(8x3) for Btrans(8x3) x D(3x3)
     double *Ktemp2 = malloc (8 * 8 * sizeof(double)); // Temp matrix(8x8) for Ktemp1(8x3) x B(3x8)
@@ -95,7 +101,7 @@ int quadElementStiffnessMatrix (double *Ke, int gp, int DOF, double *B, double *
         // Multiply the det(J) and weight to each cell of Ktemp2. Add each cell of the current matrix to the element stiffness matrix, Ke.
         for (int j = 0; j < gp * DOF; j++)
         {
-            *(Ke + j) += *(Ktemp2 + j) * detJ * *(weights + i);
+            *(Ke + j) += *(Ktemp2 + j) * detJ * weight;
         }
     }
 
@@ -103,9 +109,19 @@ int quadElementStiffnessMatrix (double *Ke, int gp, int DOF, double *B, double *
     free(Ktemp2);
 }
 
-int getElementDOFs (int dof, int nelements)
+int initElementStiffnessMatrix (double *Ke, int nnodesElement, int DOF)
 {
-
+    /*
+        Initializes / resets all values of the Ke matrix to 0. Determines the size by the number of nodes per element, times the degrees of freedom per node.
+    */
+    int Kem = nnodesElement * DOF;
+    for (int i = 0; i < Kem; i++)
+    {
+        for (int j = 0; j < Kem; j++)
+        {
+            *(Ke + i * Kem + j) = 0;
+        }
+    }
 }
 
 int globalStiffnessMatrixSkyline ()
@@ -149,20 +165,20 @@ int globalStiffnessMatrix (double *K, double *Ke, quadElement *element, int Km, 
     // Calculate and store global degrees of freedom indices from each of the nodes ids stored in the 'nodeids' array.
     for (int i = 0; i < nnodes; i++)
     {
-        for (int j = 0; j < dof; j++)
+        for (int d = 0; d < dof; d++)
         {
-            *(globDOFs + i * dof + j) = *(element->nodeids + i) * dof + j;
+            *(globDOFs + i * dof + d) = *(element->nodeids + i) * dof + d;
         }
     }
 
     int Ki; // Row indices for K
     int Kj; // Col indices for K
 
-    // Assemble the global stiffness matrix
-    for (int i = 0; i < Km; i++)
+    // Assemble the global stiffness matrix by looping over each element cell in the element stiffness matrix, finding the global indices corresponding, and adding the element cell values to the global cell values.
+    for (int i = 0; i < Kem; i++)
     {
         Ki = *(globDOFs + i); // Row indices for K
-        for (int j = 0; j < Km; j++)
+        for (int j = 0; j < Kem; j++)
         {
 
             // Check that indices are not out of bounds for the global stiffness matrix.

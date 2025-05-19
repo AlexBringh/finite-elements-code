@@ -2,12 +2,22 @@
 #include "shapeFunctions.h"
 
 
-int quadJacobian (double *J, double *Jinv, int m, double *detJ, double *Ni, double *NiPxi, double *NiPeta, double *xi, double *yi)
+int quadJacobian (double *J, double *Jinv, int m, double *detJ, double *Ni, double *NiPxi, double *NiPeta, double *coords, int dof)
 {
     /*
         TODO: Documentation.
     */
     if (m != 2) return -1; // If the Jacobian is not a 2x2 matrix, then this function should not run.
+
+    // Split the coordinates into x and y
+    double *xi = malloc(4 * sizeof(double));
+    double *yi = malloc(4 * sizeof(double));
+
+    for (int i = 0; i < 4; i++)
+    {
+        *(xi + i) = *(coords + i * dof);
+        *(yi + i) = *(coords + i * dof + 1);
+    }
 
     // Empty / initialize the Jacobian matrix to avoid problems.
     for (int i = 0; i < m * m; i++)

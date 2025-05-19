@@ -6,11 +6,10 @@
 
 #include <stdio.h>
 
+#include "shapeFunctions.h"
 #include "elements.h"
 #include "jacobian.h"
 #include "stiffnessMatrix.h"
-#include "flowRule.h"
-#include "workHardening.h"
 #include "skyline.h"
 #include "solveCroutSkyline.h"
 
@@ -78,34 +77,40 @@ int main (char *args)
     */
     printf("Running Finite Elements Simulation on Plasticity Equations! \n");
 
-    // Initialize -> Material Properties -> Stress and Strain Variables -> Initial Conditions and Read Input Data (Geometry, Boundary Conditions & Loading)
 
+
+    // DEFINING VARIABLES AND ALLOCATING MEMORY FOR THE PROCESSES
+
+
+
+    // Material properties
+    double E; // Young's Modulus
+    double v; // Poisson's ratio
+    double sigmaYieldInitial; // Initial yield stress
+    double H; // Hardening modulus
     
     // Constant values for the analysis
     int gp = 4; // Gauss Points per element
     int nelements = 100; // Number of elements in the mesh.
-    int nodeselement = 4; // Nodes per element
+    int nnodesElement = 4; // Nodes per element
     int nnodes = 200; // Number of nodes in the mesh.
     int DOF = 2; // Degrees of freedom per node
+    int dim = 2; // Dimensions of the system
     int Km = nnodes * DOF; // Number of rows / columns of the global stiffness matrix.
 
-    // Allocate memory for the 'element' structs.
+    // Allocate memory for the 'element' and 'node' structs.
     quadElement *element = malloc(nelements * sizeof(quadElement));
 
     // Allocate memory for the global-, increment- and element displacement vector.
     double *u = malloc(nnodes * DOF * sizeof(double));
     double *du = malloc(nnodes * DOF * sizeof(double));
-    double *ue = malloc(nodeselement * DOF * sizeof(double));
+    double *ue = malloc(nnodesElement * DOF * sizeof(double));
 
     // Get the shape functions for 2D Quad elements
-    int j_m = 2; // Representing the size, m, in a m*m Jacobian matrix.
-    double *Ni = malloc(j_m * j_m * sizeof(double));
-    double *NiPxi = malloc(j_m * j_m * sizeof(double));
-    double *NiPeta = malloc(j_m * j_m * sizeof(double));
-    double *weights = malloc(gp * sizeof(double));
-    quadShapeFunction(Ni, NiPxi, NiPeta, weights); // Gets the shape functions for a 2D quad element. Needs only be ran once.
+    shapeFunctions2D *sf = malloc(gp * sizeof(shapeFunctions2D));
 
     // Allocate memory for the Jacobian matrix, its determinant and the inverse.
+    int j_m = 2; // Representing the size, m, in a m*m Jacobian matrix.
     double *J = malloc(j_m * j_m * sizeof(double)); // This is initialized with values in the Jacobian function.
     double *detJ = malloc(sizeof(double)); // Store the determinant value of the Jacobian here.
     double *Jinv = malloc (j_m * j_m * sizeof(double)); // This is also initialized in the Jacobian function.
@@ -121,77 +126,122 @@ int main (char *args)
     double *D = malloc(Dm * Dn * sizeof(double));
 
     // Allocate memory for the element stiffness matrix, Ke
-    int Kem = gp * DOF;
+    int Kem = nnodesElement * DOF;
     int Ken = Kem;
     double *Ke = malloc(Kem * Ken * sizeof(double));
+
+    // Variables used in the Newton-Raphson iteration.
+    int stepCounter = 0;
+    int maxSteps = 100;     // Maximum allowed steps for each converged step.
+    int maxLoadSteps = 100; // Maximum allowed steps for each load step.
+    int stepConverged; // Check for seeing if convergence has been reached.
+
+    int currentLoadStep = 0; // 
+
+
+    // END OF DEFINING VARIABLES AND ALLOCATING MEMORY
+
 
     // Check how many nodes and degrees of freedom there are. If less than threshold, use normal matrix. If over threshold, use Skyline.
     // Allocate memory for the global stiffness matrix, (using Skyline).
 
 
-    // Variables used in the Newton-Raphson iteration.
-    int nodeID;
+    /*
+        This marks the actual start of the steps of the Finite Element code...
+    */
+    // Initialize -> Material Properties -> Stress and Strain Variables -> Initial Conditions and Read Input Data (Geometry, Boundary Conditions & Loading)
+
+
+    
+    // Gets the shape functions for a 2D quad element. Needs only be ran once as long as all the elements are the same.
+    quadShapeFunction(sf); 
+    
+
 
     // Newton-Raphson Iterator
     printf("Starting Newton-Raphson iteration.");
-    int maxIterations = 100;
-    for (int k = 0; k < maxIterations; k++)
+    for (int k = 0; k < maxSteps; k++)
     {
         printf("Running step: %1d . . . \n", k);
 
         // Apply load increment
 
-        // Loop through all elements
-        for (int e = 0; e < nelements; e++)
+        // Set convergence check to 0 (false)
+        stepConverged = 0;
+
+        // Start load step
+        for (int l = 0; l < maxLoadSteps; l++)
         {
-            printf("\tIn step: %1d . . . Analysing element #%1d . . . \n", k, e);
+            printf("\tStep: %1d, Load Step: %1d . . . Running . . . \n\n", k, l);
+            stepCounter += 1;
 
-            // Init K_e for current element
-            for (int i = 0; i < Kem; i++)
+            // Loop through all elements
+            for (int e = 0; e < nelements; e++)
             {
-                for (int j = 0; j < Kem; j++)
+                printf("\t\tStep: %1d, Load Step: %1d . . . Analysing element #%1d . . . \n", k, l, e);
+
+                // Init / reset K_e for current element
+                initElementStiffnessMatrix(Ke, nnodesElement, DOF);
+
+                // Get the displacements for the element's nodes, u_e, and store them. One value for each DOF.
+                for (int i = 0; i < nnodesElement; i++)
                 {
-                    *(Ke + i * Kem + j) = 0; // Sets all the values of the element stiffness matrix to 0.
+                    for (int d = 0; d < DOF; d++) // Loop over each DOF
+                    {
+                        *(ue + i * DOF + d) = *(u + element[e].nodeids[i] * DOF + d); // Store the displacement from the node with this id.
+                    }
                 }
+
+                // Begin looping over the Gauss Points of the elements
+                for (int i = 0; i < element->gp; i++)
+                {
+                    printf("\t\t\tElement #%1d . . . Gauss Point #%1d", e, i);
+
+                    // Find the Jacobian, B matrix, and elastic D_e matrix for this Gauss Point.
+                    quadJacobian(J, Jinv, j_m, detJ, sf[i].Ni, sf[i].NiPxi, sf[i].NiPeta, element[e].coords, DOF);
+                    quadBMatrix(B, Btrans, Jinv, sf[i].NiPxi, sf[i].NiPeta);
+                    elasticDMatrixPlaneStrain(D, E, v);
+
+                    // Get the strain for this Gauss Point with the displacement and B matrix.
+
+                    // Make trial stress
+
+                    // Find deviatoric stress, von Mises equivalent stress, yield stress adjusted for existing plastic strain, and find von Mises Yield Function
+
+                    // Check von Mises Yield Function for yielding of the node. If elastic, use elastic material stiffness matrix. If plastic, run return mapping.
+
+                    // Calculate and append the contribution to the element stiffness matrix, Ke. The element stiffness matrix is summed for each element over all the Gauss Points.
+                    quadElementStiffnessMatrix(Ke, gp, DOF, B, Btrans, D, *detJ, sf[i].weight);
+
+                    // Append the contribution to the element internal force vector, f^e_int. The element internal force vector is summed for each element over all the Gauss Points.
+                }
+
+                // Assemble into global stiffness matrix.
+                
+                // Assemble into global internal force vector.
             }
 
-            // Get the displacements for the element's nodes, u_e, and store them. One value for each DOF.
-            for (int i = 0; i < nodeselement * DOF; i++)
+            // Solve system for current applied load.
+
+            // Check for convergence
+            if (stepConverged)
             {
-                nodeID = *(element->nodeids + i); // Get the i-th node id stored in the element.
-                *(ue + i) = *(u + nodeID); // Store the displacement from the node with this id.
+                printf("\tStep: %1d, Load Step: %1d . . . CONVERGED . . . \n\n", k, l);
+                break;
             }
-
-            // Begin looping over the Gauss Points of the elements
-            for (int i = 0; i < element->gp; i++)
-            {
-                printf("\t\tElement #%1d . . . Gauss Point #%1d", e, i);
-
-
-            }
-
         }
+
+        printf("\n\nNewton-Raphson iteration has concluded after %1d steps! \n\n", stepCounter);
+ 
     }
 
-    for (int i = 0; i < nelements; i++) // Loop through each element and find the local Jacobian matrix, its determinant, the B-matrix, the B-transpose, the D-matrix, and calculate the element stiffness matrix. 
-    {
-        double *xi; // TODO: Make logic for extracting nodes coordinates into xi and yi for each element.
-        double *yi;
-        quadJacobian(J, Jinv, j_m, detJ, Ni, NiPxi, NiPeta, xi, yi);
-        quadBMatrix (B, Btrans, Jinv, NiPxi, NiPeta);
-        // QUADELASTICDMATRIXPLANESTRAIN
-        // QUADELASTOPLASTICDMATRIX
-        quadElementStiffnessMatrix(Ke, gp, DOF, B, Btrans, D, *detJ, weights);
-
-    }
 
     // Post-processing
 
+
     // Freeing some variables from memory now that they are no longer needed.
     free(element); // Element structs
-    free(Ni); // Local shape functions.
-    free(NiPxi); // Partial derivatives of local shape functions, of Xi (greek letter).
-    free(NiPeta); // Åarial derivatives of local shape functions, of Eta.
+    free(sf); // Shape functions
     free(J); // Jacobian matrix.
     free(detJ); // Determinant of the Jacobian matrix.
     free(Jinv); // Inverse matrix of the Jacobian.
