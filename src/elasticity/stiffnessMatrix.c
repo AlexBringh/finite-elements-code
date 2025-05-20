@@ -8,39 +8,46 @@
 int quadBMatrix (double *B, double *Btrans, double *Jinv, double *NiPxi, double *NiPeta)
 {
     /*
-        TODO: Documentation
+        Calculates the B matrix and B-transpose matrix from the values of J-inverse and the partial derivatives of the shape functions at the current Gauss Point.
+        This function is ran once for each Gauss Point for each element.
+
+        Input:
+        double *B      -> Pointer to B matrix. (must be allocated memory for a 3x(2 * nnodesElement) matrix, layed out in array form). Results are stored here.
+        double *Btrans -> Pointer to B-transpose matrix. (must be allocated memory for a (2 * nnodesElement)x3 matrix, layed out in array form). Results are stored here.
+        double *Jinv   -> Pointer to the calculated J-inverse matrix for the current Gauss Point.
+        double *NiPxi  -> Pointer to the partial derivatives with respects to xi of the shape functions.
+        double *NiPeta -> Pointer to the partial derivatives with respects to eta of the shape functions.
     */
     int nnodes = 4;
-    double *NiPx = malloc(nnodes * sizeof(double)); // Allocate memory for partial deriv. of shape func., N_i, for global node coord., x, for 4 nodes (for quad mesh.)
-    double *NiPy = malloc(nnodes * sizeof(double)); // Allocate memory for partial deriv. of shape func., N_i, for global node coord., y, for 4 nodes (for quad mesh.)
+    int dim = 2;
 
-    // Calculate NiPx and NiPy for all 4 nodes of the element.
-    for (int i = 0; i < nnodes; i++)
+    double NiPx;
+    double NiPy;
+
+    // Init / reset B-matrix and B-transpose
+    for (int i = 0; i < nnodes * dim * 3; i++)
     {
-        *(NiPx + i) = *(Jinv + 0) * *(NiPxi) + *(Jinv + 1) * *(NiPeta + i);
-        *(NiPy + i) = *(Jinv + 2) * *(NiPxi) + *(Jinv + 3) * *(NiPeta + i);
+        *(B + i) = 0;
+        *(Btrans + i) = 0;
     }
 
-    // Assemble the B-matrix for the element.
+
+    // Calculate NiPx and NiPy for all 4 nodes of the element. Assemble the B-matrix and B-transpose for the Gauss Point.
     for (int i = 0; i < nnodes; i++)
     {
-        *(B + i * 2) = *(NiPx + i); // First row of the B-matrix.
-        *(B + 9 + i * 2) = *(NiPy + i); // Second row of the B-matrix.
-        *(B + 16 + i * 2) = *(NiPy + i); // Third row, first value of the B-matrix.
-        *(B + 17 + i * 2) = *(NiPx + i); // Third row, second value of the B-matrix.
-    }
+        NiPx = *(Jinv + 0) * *(NiPxi + i) + *(Jinv + 1) * *(NiPeta + i); // Calculate the partial derivative for the global x coordinate of the shape functions.
+        NiPy = *(Jinv + 2) * *(NiPxi + i) + *(Jinv + 3) * *(NiPeta + i); // Calculate the partial derivative for the global y coordinate of the shape functions.
 
-    // Assemble the B-transpose for the element.
-    for (int i = 0; i < nnodes; i++)
-    {
-        *(Btrans + i * 3 * 2) = *(NiPx + i); // First column of the B-transpose.
-        *(Btrans + i * 3 * 2 + 4) = *(NiPy + i); // Second column of the B-transpose.
-        *(Btrans + i * 3 * 2 + 2) = *(NiPy + i); // Third column, first value of the B-transpose.
-        *(Btrans + i * 3 * 2 + 5) = *(NiPx + i); // Third column, second value of the B-transpose.
-    }
+        *(B + i * 2) = NiPx; // First row of the B-matrix.
+        *(B + 9 + i * 2) = NiPy; // Second row of the B-matrix.
+        *(B + 16 + i * 2) = NiPy; // Third row, first value of the B-matrix.
+        *(B + 17 + i * 2) = NiPx; // Third row, second value of the B-matrix.
 
-    free(NiPx);
-    free(NiPy);
+        *(Btrans + i * 3 * 2) = NiPx; // First column of the B-transpose.
+        *(Btrans + i * 3 * 2 + 4) = NiPy; // Second column of the B-transpose.
+        *(Btrans + i * 3 * 2 + 2) = NiPy; // Third column, first value of the B-transpose.
+        *(Btrans + i * 3 * 2 + 5) = NiPx; // Third column, second value of the B-transpose.
+    }
 
     return 0;
 }
@@ -48,17 +55,44 @@ int quadBMatrix (double *B, double *Btrans, double *Jinv, double *NiPxi, double 
 int elasticDMatrixPlaneStress (double *D, double E, double v)
 {
     /*
-        TODO: Documentaiton
         Good for thin structures where the thickness is small compared to other dimensions and loads are in-plane.
+        This function is used for systems where Plane Stress is assumed.
+
+        The elastic material stiffness matrix is used to relate stress and strain by Hooke's law. 
+        The elastic matrix is used for the domain where the material can be assumed not the undergo permanent deformation.
+
+        Input:
+        double *D -> Pointer to D matrix (must be allocated memory for a 3x3 matrix, layed out in array form). Results / assembled D_e matrix is stored here.
+        double E  -> Young's Modulus
+        double v  -> Poisson's Ratio
     */
-   // TODO: Implementation
+   
+    double multiplier = E  / (1 - v * v);
+
+    *(D + 0) = multiplier * 1;
+    *(D + 1) = multiplier * v;
+    *(D + 2) = 0;
+    *(D + 3) = multiplier * v;
+    *(D + 4) = multiplier * 1;
+    *(D + 5) = 0;
+    *(D + 6) = 0;
+    *(D + 7) = 0;
+    *(D + 8) = multiplier * (1 - v) / 2;
 }
 
 int elasticDMatrixPlaneStrain (double *D, double E, double v)
 {
     /*
-        TODO: Documentation
         Good for thick- or long bodies where the deformation in one direction is negligible.
+        This function is used for systems where Plane Strain is assumed.
+
+        The elastic material stiffness matrix is used to relate stress and strain by Hooke's law. 
+        The elastic matrix is used for the domain where the material can be assumed not the undergo permanent deformation.
+
+        Input:
+        double *D -> Pointer to D matrix (must be allocated memory for a 3x3 matrix, layed out in array form). Results / assembled D_e matrix is stored here.
+        double E  -> Young's Modulus
+        double v  -> Poisson's Ratio
     */
     double multiplier = E * (1 - v) / ((1 + v) * (1 - 2 * v));
 
@@ -70,7 +104,7 @@ int elasticDMatrixPlaneStrain (double *D, double E, double v)
     *(D + 5) = 0;
     *(D + 6) = 0;
     *(D + 7) = 0;
-    *(D + 8) = (1 - 2 * v) / (2 * (1 - v));
+    *(D + 8) = multiplier * (1 - 2 * v) / (2 * (1 - v));
 }
 
 int elastoPlasticDMatrix ()
@@ -80,29 +114,33 @@ int elastoPlasticDMatrix ()
     */
 }
 
-int quadElementStiffnessMatrix (double *Ke, int gp, int DOF, double *B, double *Btrans, double *D, double detJ, double weight)
+int elementStiffnessMatrix (double *Ke, int nnodesElement, int DOF, double *B, double *Btrans, double *D, double detJ, double weight)
 {
     /*
-        TODO: Documentation
+        Calculates the element stiffness matrix contribution for a given Gauss Point.
+        This function will be ran once for every Gauss Point of an element, with its own unique B matrix, Jacobian, D matrix, and weight (though integration weight is not always unique. See 2D quad elements.)
+        The function adds teh contribution to the element stiffness matrix for the current element. The matrix should be reset at the start of every element in the system, but not for every Gauss Point.
+
+        Input: 
+        double *Ke -> Element stiffness matrix
     */
 
-    double *Ktemp1 = malloc (8 * 3 * sizeof(double)); // Temp matrix(8x3) for Btrans(8x3) x D(3x3)
-    double *Ktemp2 = malloc (8 * 8 * sizeof(double)); // Temp matrix(8x8) for Ktemp1(8x3) x B(3x8)
+    int m = nnodesElement * DOF;
+
+    double *Ktemp1 = malloc (m * 3 * sizeof(double)); // Temp matrix(mx3) for Btrans(mx3) x D(3x3)
+    double *Ktemp2 = malloc (m * m * sizeof(double)); // Temp matrix(mxm) for Ktemp1(mx3) x B(3xm)
+
+    for (int j = 0; j < m * 3; j++) *(Ktemp1 + j) = 0; // Initialize / empty Ktemp1(mx3)
+    for (int j = 0; j < m * m; j++) *(Ktemp2 + j) = 0; // Initialize / empty Ktemp2(mxm)
+
+    matrixMultiply(Btrans, D, Ktemp1, 8, 3, 3);
+    matrixMultiply(Ktemp1, B, Ktemp2, 8, 3, 8);
     
-    // Summation of the element stiffness matrix for each Gauss Point, i
-    for (int i = 0; i < gp; i++)
+    // Summation of the element stiffness matrix for the current Gauss Point.
+    for (int i = 0; i < m * m; i++)
     {
-        for (int j = 0; j < 8*3; j++) *(Ktemp1 + j) = 0; // Initialize / empty Ktemp1(8x3)
-        for (int j = 0; j < 8*8; j++) *(Ktemp2 + j) = 0; // Initialize / empty Ktemp2(8x8)
-
-        matrixMultiply(Btrans, D, Ktemp1, 8, 3, 3);
-        matrixMultiply(Ktemp1, B, Ktemp2, 8, 3, 8);
-
         // Multiply the det(J) and weight to each cell of Ktemp2. Add each cell of the current matrix to the element stiffness matrix, Ke.
-        for (int j = 0; j < gp * DOF; j++)
-        {
-            *(Ke + j) += *(Ktemp2 + j) * detJ * weight;
-        }
+        *(Ke + i) += *(Ktemp2 + i) * detJ * weight;
     }
 
     free(Ktemp1);

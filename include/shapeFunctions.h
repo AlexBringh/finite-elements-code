@@ -11,12 +11,12 @@ typedef struct
 } shapeFunctions2D;
 
 
-int quadShapeFunction (shapeFunctions2D *sf);
-int triangularShapeFunction ();
+int quadShapeFunctions (shapeFunctions2D *sf);
+int triangularShapeFunctions ();
 void print2DShapeFunctions (shapeFunctions2D *sf, int gp);
 
 // 3D Shape Functions
-int hexShapeFunction ();
-int tetraShapeFunction ();
+int hexShapeFunctions ();
+int tetraShapeFunctions ();
 
 #endif

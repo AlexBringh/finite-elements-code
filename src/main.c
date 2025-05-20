@@ -154,7 +154,7 @@ int main (char *args)
 
     
     // Gets the shape functions for a 2D quad element. Needs only be ran once as long as all the elements are the same.
-    quadShapeFunction(sf); 
+    quadShapeFunctions(sf); 
     
 
 
@@ -210,8 +210,8 @@ int main (char *args)
 
                     // Check von Mises Yield Function for yielding of the node. If elastic, use elastic material stiffness matrix. If plastic, run return mapping.
 
-                    // Calculate and append the contribution to the element stiffness matrix, Ke. The element stiffness matrix is summed for each element over all the Gauss Points.
-                    quadElementStiffnessMatrix(Ke, gp, DOF, B, Btrans, D, *detJ, sf[i].weight);
+                    // Calculate and append the contribution to the element stiffness matrix, Ke, for the current Gauss Point. The element stiffness matrix is summed for each element over all the Gauss Points.
+                    elementStiffnessMatrix(Ke, nnodesElement, DOF, B, Btrans, D, *detJ, sf[i].weight);
 
                     // Append the contribution to the element internal force vector, f^e_int. The element internal force vector is summed for each element over all the Gauss Points.
                 }

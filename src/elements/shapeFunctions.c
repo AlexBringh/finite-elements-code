@@ -2,7 +2,7 @@
 
 #include "shapeFunctions.h"
 
-int quadShapeFunction (shapeFunctions2D *sf)
+int quadShapeFunctions (shapeFunctions2D *sf)
 {
     /*
         Input value *Ni should be a pointer with allocated enough memory for 4 double values.
@@ -69,7 +69,7 @@ int quadShapeFunction (shapeFunctions2D *sf)
     free(eta);
 }
 
-int triangularShapeFunction ()
+int triangularShapeFunctions ()
 {
     /*
         Not yet implemented for this code. Only 2D quad elements are supported for now.
@@ -92,14 +92,14 @@ void print2DShapeFunctions (shapeFunctions2D *sf, int gp)
 
 
 
-int hexShapeFunction ()
+int hexShapeFunctions ()
 {
     /*
         Not yet implemented for this code. Only 2D quad elements are supported for now.
     */
 }
 
-int tetraShapeFunction ()
+int tetraShapeFunctions ()
 {
     /*
         Not yet implemented for this code. Only 2D quad elements are supported for now.
