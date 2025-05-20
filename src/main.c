@@ -44,7 +44,7 @@ int main (char *args)
         - From the trial stress, calculate the trial deviatoric stress and the von Mises equivalent stress
         - Check the trial stress against the yield function f = sigma_eq - sigma_y, where sigma_y = sigma_y0 + H * epsilon_bar_p
         - If f > 0 -> Plasticity (compute delta gamma, n, and D_ep), if f <= 0 -> elasticity (use D_e)
-            - if f > 0 -> Compute delta gamma = f_yield / (3 G + H)
+            - if f > 0 -> Compute delta gamma (plastic multiplier) = f_yield / (3 G + H)
             - G = E / (2(1+v))
             - Correct stress on Gauss point as sigma = sigma_trial - 2 G * delta gamma * n
             - Make trial epsilon_p = epsilon_p_stored + delta gamma * n

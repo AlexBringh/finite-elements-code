@@ -107,13 +107,6 @@ int elasticDMatrixPlaneStrain (double *D, double E, double v)
     *(D + 8) = multiplier * (1 - 2 * v) / (2 * (1 - v));
 }
 
-int elastoPlasticDMatrix ()
-{
-    /*
-        TODO: Documentation
-    */
-}
-
 int elementStiffnessMatrix (double *Ke, int nnodesElement, int DOF, double *B, double *Btrans, double *D, double detJ, double weight)
 {
     /*
