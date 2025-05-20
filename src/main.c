@@ -4,14 +4,17 @@
 //	Date of creation: 16.10.2024
 //
 
+// System includes
 #include <stdio.h>
 
-#include "shapeFunctions.h"
+// Local includes
 #include "elements.h"
 #include "jacobian.h"
 #include "stiffnessMatrix.h"
 #include "skyline.h"
 #include "solveCroutSkyline.h"
+#include "shapeFunctions.h"
+#include "vonMisesYield.h"
 
 int main (char *args)
 {
@@ -135,8 +138,17 @@ int main (char *args)
     int maxSteps = 100;     // Maximum allowed steps for each converged step.
     int maxLoadSteps = 100; // Maximum allowed steps for each load step.
     int stepConverged; // Check for seeing if convergence has been reached.
-
     int currentLoadStep = 0; // 
+
+    // Stresses and strains
+    double *epsilon = malloc(nnodesElement * DOF * sizeof(double));
+
+    double sigmaTrial; // Trial stress
+    double *sDeviatoric; // Deviatoric stress
+    double sigma; // Corrected stress for Gauss Point
+    double sigmaEq; // von Mises equivalent stress
+    double sigmaYield; // Corrected yield stress
+    double f; // von Mises yield function result
 
 
     // END OF DEFINING VARIABLES AND ALLOCATING MEMORY
@@ -203,12 +215,19 @@ int main (char *args)
                     elasticDMatrixPlaneStrain(D, E, v);
 
                     // Get the strain for this Gauss Point with the displacement and B matrix.
+                    displacementStrain(epsilon, B, ue, nnodesElement, DOF);
 
                     // Make trial stress
 
                     // Find deviatoric stress, von Mises equivalent stress, yield stress adjusted for existing plastic strain, and find von Mises Yield Function
 
                     // Check von Mises Yield Function for yielding of the node. If elastic, use elastic material stiffness matrix. If plastic, run return mapping.
+                    f = vonMisesYieldFunction(sigmaEq, sigmaYield);
+
+                    if (f > 0) // f > 0 -> yield
+                    {
+                        // Return mapping
+                    }
 
                     // Calculate and append the contribution to the element stiffness matrix, Ke, for the current Gauss Point. The element stiffness matrix is summed for each element over all the Gauss Points.
                     elementStiffnessMatrix(Ke, nnodesElement, DOF, B, Btrans, D, *detJ, sf[i].weight);

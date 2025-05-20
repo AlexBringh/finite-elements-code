@@ -17,5 +17,7 @@ typedef struct {
 
 } quadElement;
 
+int displacementStrain (double *epsilon, double *B, double *ue, int nnodesElement, int dof);
+
 
 #endif

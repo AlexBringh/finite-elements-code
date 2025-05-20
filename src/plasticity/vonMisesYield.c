@@ -1,6 +1,7 @@
 #include "vonMisesYield.h"
+#include "matrixArithmetic.h"
 
-int trialStress ()
+int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilonP)
 {
 
 }
@@ -25,7 +26,7 @@ int plasticCorrectedYieldStress ()
 
 }
 
-int vonMisesYieldFunction ()
+double vonMisesYieldFunction (double sigmaEq, double sigmaYield)
 {
-    
+
 }
