@@ -10,10 +10,15 @@ typedef struct {
     int *nodeids; // Node connectivity numbering
     int *coords; // Global coordinates of connected nodes.
 
-    // Accumulated stress and plastic strain.
-    double sigma;
-    double epsilon_p;
-    double epsilon_bar_p;
+    // Accumulated / commited stress and plastic strain.
+    double *sigma;
+    double *epsilonP;
+    double epsilonBarP;
+
+    // Trial stress and strain
+    double *trialSigma;
+    double *trialEpsilonP;
+    double trialEpsilonBarP;
 
 } quadElement;
 

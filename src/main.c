@@ -143,8 +143,9 @@ int main (char *args)
     // Stresses and strains
     double *epsilon = malloc(nnodesElement * DOF * sizeof(double));
 
-    double sigmaTrial; // Trial stress
-    double *sDeviatoric; // Deviatoric stress
+    double *sigmaTrial = malloc(Dn * sizeof(double)); // Trial stress
+    double *sDeviatoric = malloc(Dn * sizeof(double)); // Deviatoric stress
+    double *nUnitDeviatoric = malloc(Dn * sizeof(double));
     double sigma; // Corrected stress for Gauss Point
     double sigmaEq; // von Mises equivalent stress
     double sigmaYield; // Corrected yield stress
@@ -218,8 +219,12 @@ int main (char *args)
                     displacementStrain(epsilon, B, ue, nnodesElement, DOF);
 
                     // Make trial stress
+                    trialStress(sigmaTrial, D, epsilon, element[e].epsilonP, Dn);
 
                     // Find deviatoric stress, von Mises equivalent stress, yield stress adjusted for existing plastic strain, and find von Mises Yield Function
+                    deviatoricStress2D(sDeviatoric, sigmaTrial);
+                    sigmaEq = vonMisesEquivalentStress2D(sDeviatoric);
+                    sigmaYield = plasticCorrectedYieldStress(sigmaYieldInitial, H, element[e].epsilonBarP);
 
                     // Check von Mises Yield Function for yielding of the node. If elastic, use elastic material stiffness matrix. If plastic, run return mapping.
                     f = vonMisesYieldFunction(sigmaEq, sigmaYield);
@@ -227,6 +232,7 @@ int main (char *args)
                     if (f > 0) // f > 0 -> yield
                     {
                         // Return mapping
+                        unitDeviatoricStress(nUnitDeviatoric, sDeviatoric, Dn);
                     }
 
                     // Calculate and append the contribution to the element stiffness matrix, Ke, for the current Gauss Point. The element stiffness matrix is summed for each element over all the Gauss Points.
