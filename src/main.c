@@ -10,6 +10,7 @@
 // Local includes
 #include "elements.h"
 #include "jacobian.h"
+#include "returnMapping.h"
 #include "stiffnessMatrix.h"
 #include "skyline.h"
 #include "solveCroutSkyline.h"
@@ -91,6 +92,7 @@ int main (char *args)
     double v; // Poisson's ratio
     double sigmaYieldInitial; // Initial yield stress
     double H; // Hardening modulus
+    double G = shearModulus(E, v);
     
     // Constant values for the analysis
     int gp = 4; // Gauss Points per element
@@ -249,8 +251,15 @@ int main (char *args)
 
                     if (f > 0) // f > 0 -> yield
                     {
-                        // Return mapping
+                        // Return mapping processes
                         unitDeviatoricStress(nUnitDeviatoric, sDeviatoric, Dn);
+                        elastoPlasticDMatrix(D, nUnitDeviatoric, H, Dn);
+                        // Plastic multiplier
+                        // Corrected trial stress
+                        // Trial plastic strain tensor
+                        // Trial plastic equivalent strain
+
+                        // Store trial values in element
                     }
 
                     // Calculate and append the contribution to the element stiffness matrix, Ke, for the current Gauss Point. The element stiffness matrix is summed for each element over all the Gauss Points.
