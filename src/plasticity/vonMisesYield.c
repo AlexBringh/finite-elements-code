@@ -100,5 +100,15 @@ double plasticCorrectedYieldStress (double sigmaYieldInitial, double H, double e
 
 double vonMisesYieldFunction (double sigmaEq, double sigmaYield)
 {
+    /*
+        Calculates the value of the von Mises Yield function as sigma_eq - sigma_y.
 
+        Inputs:
+        double sigmaEq    -> The von Mises equivalent stress for the current Gauss Point.
+        double sigmaYield -> The yield stress, adjusted for work hardening.
+
+        Output:
+        double vonMisesYieldFunction -> Returns the yield function value.
+    */
+    return sigmaEq - sigmaYield;
 }

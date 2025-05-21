@@ -5,6 +5,7 @@
 #include "matrixArithmetic.h"
 #include "elements.h"
 
+
 int quadBMatrix (double *B, double *Btrans, double *Jinv, double *NiPxi, double *NiPeta)
 {
     /*
@@ -51,6 +52,7 @@ int quadBMatrix (double *B, double *Btrans, double *Jinv, double *NiPxi, double 
 
     return 0;
 }
+
 
 int elasticDMatrixPlaneStress (double *D, double E, double v)
 {
@@ -107,6 +109,7 @@ int elasticDMatrixPlaneStrain (double *D, double E, double v)
     *(D + 8) = multiplier * (1 - 2 * v) / (2 * (1 - v));
 }
 
+
 int elementStiffnessMatrix (double *Ke, int nnodesElement, int DOF, double *B, double *Btrans, double *D, double detJ, double weight)
 {
     /*
@@ -140,6 +143,7 @@ int elementStiffnessMatrix (double *Ke, int nnodesElement, int DOF, double *B, d
     free(Ktemp2);
 }
 
+
 int initElementStiffnessMatrix (double *Ke, int nnodesElement, int DOF)
 {
     /*
@@ -155,10 +159,6 @@ int initElementStiffnessMatrix (double *Ke, int nnodesElement, int DOF)
     }
 }
 
-int globalStiffnessMatrixSkyline ()
-{
-
-}
 
 int initGlobalStiffnessMatrix (double *K, int Km)
 {
@@ -179,33 +179,40 @@ int initGlobalStiffnessMatrix (double *K, int Km)
     }
 }
 
-int globalStiffnessMatrix (double *K, double *Ke, quadElement *element, int Km, int Kem)
+
+int globalStiffnessMatrix (double *K, double *Ke, int *nodeids, int dof, int nnodesElement, int Km, int Kem)
 {
     /*
-        TODO: Documentation
-    */
-    //
+        Assembles the element stiffnes matrix into the global stiffness matrix. 
+        Determines the correct indices based on the node id found in the current element.
 
-    // Dereference values from the current element.
-    int dof = element->dof;
-    int nnodes = element->nnodes;
+        Inputs:
+        double *K          ->  Pointer to global stiffness matrix. Results are stored here.
+        double *Ke         ->  Pointer to element stiffness matrix. 
+        int *nodeids       ->  Pointer to nodeids for the nodes building the current element.
+        int dof            ->  Degrees of freedom of the nodes.
+        int nnodesElement  ->  Number of nodes in the element.
+        int Km             ->  Size, m_global, of the rows/columns of the global stiffness matrix.
+        int Kem            ->  Size, m_element, of the rows/columns of the element stiffness matrix.
+    */
 
     // Allocate memory for array to hold global degrees of freedom indices.
-    int *globDOFs = malloc (nnodes * dof * sizeof(int));
+    int *globDOFs = malloc (nnodesElement * dof * sizeof(int));
 
     // Calculate and store global degrees of freedom indices from each of the nodes ids stored in the 'nodeids' array.
-    for (int i = 0; i < nnodes; i++)
+    for (int i = 0; i < nnodesElement; i++)
     {
         for (int d = 0; d < dof; d++)
         {
-            *(globDOFs + i * dof + d) = *(element->nodeids + i) * dof + d;
+            *(globDOFs + i * dof + d) = *(nodeids + i) * dof + d;
         }
     }
 
     int Ki; // Row indices for K
     int Kj; // Col indices for K
 
-    // Assemble the global stiffness matrix by looping over each element cell in the element stiffness matrix, finding the global indices corresponding, and adding the element cell values to the global cell values.
+    // Assemble the global stiffness matrix by looping over each element cell in the element stiffness matrix, 
+    // finding the global indices corresponding, and adding the element cell values to the global cell values.
     for (int i = 0; i < Kem; i++)
     {
         Ki = *(globDOFs + i); // Row indices for K
