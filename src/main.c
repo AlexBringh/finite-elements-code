@@ -9,6 +9,7 @@
 
 // Local includes
 #include "elements.h"
+#include "forceVector.h"
 #include "jacobian.h"
 #include "returnMapping.h"
 #include "stiffnessMatrix.h"
@@ -117,6 +118,9 @@ int main (char *args)
         initGlobalStiffnessMatrix(K, Km); // Set all values in the matrix to 0.
     }
 
+    // Allocate memory for the global internal force vector, f_int
+    double *Fint = malloc(Km * sizeof(double));
+
     // Determine whether to use normal matrix or skyline matrix.
 
     // Allocate memory for the 'element' and 'node' structs.
@@ -150,6 +154,9 @@ int main (char *args)
     int Kem = nnodesElement * DOF;
     int Ken = Kem;
     double *Ke = malloc(Kem * Ken * sizeof(double));
+
+    // Allocate memory for the element internal force vector, FintE
+    double *FintE = malloc(Kem * sizeof(double));
     
 
     // Variables used in the Newton-Raphson iteration.
@@ -199,6 +206,10 @@ int main (char *args)
     {
         printf("Running step: %1d . . . \n", k);
 
+        // Init / reset global stiffness matrix and global internal force vetor for the current step
+        initGlobalStiffnessMatrix(K, Km);
+        initGlobalInternalForceVector(Fint, Km);
+
         // Apply load increment
 
         // Set convergence check to 0 (false)
@@ -215,8 +226,9 @@ int main (char *args)
             {
                 printf("\t\tStep: %1d, Load Step: %1d . . . Analysing element #%1d . . . \n", k, l, e);
 
-                // Init / reset K_e for current element
+                // Init / reset K_e and F_int_e for the current element
                 initElementStiffnessMatrix(Ke, Kem);
+                initElementInternalForceVector(FintE, Kem);
 
                 // Get the displacements for the element's nodes, u_e, and store them. One value for each DOF.
                 for (int i = 0; i < nnodesElement; i++)
@@ -267,6 +279,9 @@ int main (char *args)
                         // Corrected trial stress
                         plasticStressCorrection(sigma, sigmaTrial, nUnitDeviatoric, G, deltaGamma, Dn);
 
+                        // Append the contribution to the element internal force vector, f^e_int, with the corrected stress. The element internal force vector is summed for each element over all the Gauss Points.
+                        elementInternalForceVector(FintE, Btrans, sigma, *detJ, sf[i].weight, Kem, Dn);
+
                         // Trial plastic strain tensor
                         trialPlasticStrain(trialEpsilonP, element[e].epsilonP, nUnitDeviatoric, deltaGamma, Dn, i);
 
@@ -280,17 +295,21 @@ int main (char *args)
                             element[e].trialEpsilonP[i * element[e].gp + j] = *(trialEpsilonP + j);
                         }
                     }
+                    else
+                    {
+                        // Append the contribution to the element internal force vector, f^e_int, with the trial stress. The element internal force vector is summed for each element over all the Gauss Points.
+                        elementInternalForceVector(FintE, Btrans, sigmaTrial, *detJ, sf[i].weight, Kem, Dn);
+                    }
 
                     // Calculate and append the contribution to the element stiffness matrix, Ke, for the current Gauss Point. The element stiffness matrix is summed for each element over all the Gauss Points.
                     elementStiffnessMatrix(Ke, nnodesElement, DOF, B, Btrans, D, *detJ, sf[i].weight);
-
-                    // Append the contribution to the element internal force vector, f^e_int. The element internal force vector is summed for each element over all the Gauss Points.
                 }
 
                 // Assemble into global stiffness matrix.
                 globalStiffnessMatrix(K, Ke, element[e].nodeids, DOF, nnodesElement, Km, Kem);
                 
                 // Assemble into global internal force vector.
+                globalInternalForceVector(Fint, FintE, element[e].nodeids, DOF, nnodesElement, Km, Kem);
             }
 
             // Solve system for current applied load.

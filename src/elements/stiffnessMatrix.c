@@ -115,10 +115,17 @@ int elementStiffnessMatrix (double *Ke, int nnodesElement, int DOF, double *B, d
     /*
         Calculates the element stiffness matrix contribution for a given Gauss Point.
         This function will be ran once for every Gauss Point of an element, with its own unique B matrix, Jacobian, D matrix, and weight (though integration weight is not always unique. See 2D quad elements.)
-        The function adds teh contribution to the element stiffness matrix for the current element. The matrix should be reset at the start of every element in the system, but not for every Gauss Point.
+        The function adds the contribution to the element stiffness matrix for the current element. The matrix should be reset at the start of every element in the system, but not for every Gauss Point.
 
         Input: 
-        double *Ke -> Element stiffness matrix
+        double *Ke        -> Pointer to element stiffness matrix. Results are stored here
+        int nnodesElement -> Number of nodes in the element
+        int DOF           -> Degrees of freedom of the nodes
+        double *B         -> Pointer to B matrix for the current Gauss Point
+        double *Btrans    -> Pointer to B transpose matrix
+        double *D         -> Pointer to material stiffness matrix
+        double detJ       -> Determinant value of the Jacobian for the current Gauss Point
+        double weight     -> weight value for the current Gauss Point
     */
 
     int m = nnodesElement * DOF;
@@ -148,6 +155,10 @@ int initElementStiffnessMatrix (double *Ke, int Kem)
 {
     /*
         Initializes / resets all values of the Ke matrix to 0. Determines the size by the number of nodes per element, times the degrees of freedom per node.
+
+        Inputs:
+        double *Ke -> Pointer to element stiffness matrix. Results are stored here
+        int Kem    -> Size m of the element stiffness matrix.
     */
    
     for (int i = 0; i < Kem * Kem; i++)
@@ -164,8 +175,8 @@ int initGlobalStiffnessMatrix (double *K, int Km)
         Cannot be used for Skylie Matrix structures.
 
         Inputs:
-        double *K -> pointer to global stiffness matrix in array-form.K
-        int Km -> number of columns (rows) of the matrix.
+        double *K -> Pointer to global stiffness matrix in array-form.
+        int Km    -> Number of columns (rows) of the matrix.
     */
     for (int i = 0; i < Km * Km; i++)
     {
