@@ -21,15 +21,17 @@ int initQuadElement (quadElement *element, int id, int gp, int nnodesElement, in
     element->nnodes = nnodesElement;
     element->dof = dof;
 
-    element->epsilonBarP = 0;
-    element->trialEpsilonBarP = 0;
+    
+    
 
     element->nodeids = malloc(nnodesElement * sizeof(int));
     element->coords = malloc(nnodesElement * dof * sizeof(double));
-    element->sigma = malloc(3 * sizeof(double));
-    element->epsilonP = malloc(3 * sizeof(double));
-    element->trialSigma = malloc(3 * sizeof(double));
-    element->trialEpsilonP = malloc(3 * sizeof(double));
+    element->sigma = malloc(3 * gp * sizeof(double));
+    element->epsilonP = malloc(3 * gp * sizeof(double));
+    element->epsilonBarP = malloc(gp * sizeof(double));
+    element->trialSigma = malloc(3 * gp * sizeof(double));
+    element->trialEpsilonP = malloc(3 * gp * sizeof(double));
+    element->trialEpsilonBarP = malloc(gp * sizeof(double));
 
     // Store element ids.
     for (int i = 0; i < nnodesElement; i++)
@@ -39,17 +41,24 @@ int initQuadElement (quadElement *element, int id, int gp, int nnodesElement, in
         // Store coords of the nodes
         for (int d = 0; d < dof; d++)
         {
-            element->nodeids[i * dof + d] = *(coords + i * dof + d);
+            element->coords[i * dof + d] = *(coords + i * dof + d);
         }
     }
 
-    // Init stress and strain
-    for (int i = 0; i < 3; i++)
+    // Init stress and strain. Each vector has 3 values for each Gauss Point.
+    for (int i = 0; i < 3 * gp; i++)
     {
         element->sigma[i] = 0;
         element->trialSigma[i] = 0;
         element->epsilonP[i] = 0;
         element->trialEpsilonP[i] = 0;
+    }
+
+    // Init equivalent strain.
+    for (int i = 0; i < gp; i++)
+    {
+        element->epsilonBarP[i] = 0;
+        element->trialEpsilonBarP[i] = 0;
     }
 
     return 0;

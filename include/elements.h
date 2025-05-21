@@ -11,14 +11,14 @@ typedef struct {
     double *coords; // Global coordinates of connected nodes.
 
     // Accumulated / commited stress and plastic strain.
-    double *sigma;
-    double *epsilonP;
-    double epsilonBarP;
+    double *sigma; // Accumulated stress for all Gauss Points
+    double *epsilonP; // Accumulated plastic strain tensors for all Gauss Points
+    double *epsilonBarP; // Accumulated equivalent plastic strain for all Gauss Points
 
     // Trial stress and strain
-    double *trialSigma;
+    double *trialSigma; // 
     double *trialEpsilonP;
-    double trialEpsilonBarP;
+    double *trialEpsilonBarP;
 
 } quadElement;
 

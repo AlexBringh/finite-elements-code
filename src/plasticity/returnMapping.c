@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "returnMapping.h"
 
 int elastoPlasticDMatrix (double* D, double* n, double H, int Dn)
@@ -61,7 +63,7 @@ int elastoPlasticDMatrix (double* D, double* n, double H, int Dn)
 double shearModulus (double E, double v)
 {
     /*
-        Calculates the shear modulus, G.
+        Calculates the shear modulus, G, for the material.
 
         Inputs:
         double E -> Young's Modulus
@@ -78,7 +80,7 @@ double shearModulus (double E, double v)
 double plasticMultiplier (double f, double G, double H)
 {
     /*
-        Calculates the plastic multiplier, delta-gamma.
+        Calculates the plastic multiplier, delta-gamma, for the current Gauss Point.
 
         Inputs:
         double f -> von Mises yield function value
@@ -92,19 +94,47 @@ double plasticMultiplier (double f, double G, double H)
     return f / (3 * G + H);
 }
 
-int plasticStressCorrection ()  
+void plasticStressCorrection (double *sigma, double *sigmaTrial, double *n, double G, double deltaGamma, int index)  
 {
+    /*
+        Corrects the trial stress in the event that the Gauss Point's von Mises equivalent stress exceeds the yield stress.
 
+        Inputs:
+        double *sigma -> Pointer to corrected stress. Results are stored here.
+        double *sigmaTrial -> Pointer to trial stress.
+        double *n -> Pointer to unit deviatoric stress.
+        double G -> Shear Modulus
+        double deltaGamma -> Plastic multiplier
+        int index -> index / row size of sigma.
+    */
+    for (int i = 0; i < index; i++)
+    {
+        *(sigma + i) = *(sigmaTrial + i) - 2 * G * deltaGamma * *(n + i);
+    }
 }
 
 
-int trialPlasticStrain ()
+void trialPlasticStrain (double* trialEpsilonP, double *epsilonP, double *n, double deltaGamma, int index, int gpCurrent)
 {
+    /*
+        Calcualtes the trial plastic strain tensor, epsilon_hat_p, for the current Gauss Point.
 
+        Inputs:
+        double *trialEpsilonP -> Pointer to trial plastic strain tensor. Results are stored here.
+        double *epsilonP -> Pointer to accumulated plastic strain for all the Gauss Points in the Element.
+    */
+
+    double epsilonPcurrent; // Used to find store the i-th plastic strain value for the current Gauss Point.
+
+    for (int i = 0; i < index; i++)
+    {
+        epsilonPcurrent = *(epsilonP + gpCurrent * index + i);
+        *(trialEpsilonP + i) = epsilonPcurrent + deltaGamma * *(n + i);
+    }
 }
 
 
-double trialEquivalentPlasticStrain ()
+double trialEquivalentPlasticStrain (double deltaGamma)
 {
-
+    return sqrt(2 / 3) * deltaGamma;
 }

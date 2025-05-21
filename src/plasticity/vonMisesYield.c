@@ -4,7 +4,7 @@
 #include "matrixArithmetic.h"
 
 
-int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilonP, int Dn)
+int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilonP, int Dn, int gpCurrent)
 {
     /*
         Calculates the trial stress at a Gauss Point adjusted for the accumulated plastic strain tensor.
@@ -13,18 +13,26 @@ int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilo
         double *sigmaTrial -> Pointer to storing the trial stress vector
         double *De         -> Pointer to D matrix for Hooke's material law (elastic prediction)
         double *epsilon    -> Pointer to strain vector calculated from displacement and B matrix for the current Gauss Point
-        double *epsilonP   -> Pointer to plastic strain vector accumulated at the Gauss Point
+        double *epsilonP   -> Pointer to plastic strain vector accumulated for all the Gauss Points in the element
         int Dn             -> size of De matrix.
     */
 
     double *epsilonCorrected = malloc(Dn * sizeof(double));
+    double *epsilonPGP = malloc(Dn * sizeof(double));
+
+    // Extract the plsatic strain tensors for the current Gauss Point
+    for (int i = 0; i < Dn; i++)
+    {
+        *(epsilonPGP + i) = *(epsilonP + gpCurrent * Dn + i);
+    }
 
     // Calculate epsilon - epsilon_p
-    matrixSubtract(epsilon, epsilonP, epsilonCorrected, Dn, 1);
+    matrixSubtract(epsilon, epsilonPGP, epsilonCorrected, Dn, 1);
 
     // Calculate De * (epsilon - epsilon_p)
     matrixMultiply(De, epsilonCorrected, sigmaTrial, Dn, Dn, 1);
 
+    free(epsilonPGP);
     free(epsilonCorrected);
 }
 

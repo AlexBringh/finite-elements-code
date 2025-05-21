@@ -19,9 +19,8 @@
 
 int main (char *args)
 {
-    /*
-        The entry point of the program.
-    */
+    // The entry point of the program.
+
     /*    
     Step 1: Import and initialize Data
         - Load input data: Node coords, Element connectivity, Boundary conditions, Applied load vectors, Material properties (E, v, sigma_yield_0, H)
@@ -166,10 +165,13 @@ int main (char *args)
     double *sigmaTrial = malloc(Dn * sizeof(double)); // Trial stress
     double *sDeviatoric = malloc(Dn * sizeof(double)); // Deviatoric stress
     double *nUnitDeviatoric = malloc(Dn * sizeof(double));
-    double sigma; // Corrected stress for Gauss Point
+    double *sigma = malloc(Dn * sizeof(double)); // Corrected stress for Gauss Point
     double sigmaEq; // von Mises equivalent stress
     double sigmaYield; // Corrected yield stress
     double f; // von Mises yield function result
+    double deltaGamma;
+    double *trialEpsilonP = malloc(Dn * sizeof(double));
+    double trialEpsilonBarP;
 
 
     // END OF DEFINING VARIABLES AND ALLOCATING MEMORY
@@ -225,7 +227,7 @@ int main (char *args)
                     }
                 }
 
-                // Begin looping over the Gauss Points of the elements
+                // Begin looping over the Gauss Points of the elements, each loop is for the i-th Gauss Point.
                 for (int i = 0; i < element->gp; i++)
                 {
                     printf("\t\t\tElement #%1d . . . Gauss Point #%1d", e, i);
@@ -239,12 +241,12 @@ int main (char *args)
                     displacementStrain(epsilon, B, ue, nnodesElement, DOF);
 
                     // Make trial stress
-                    trialStress(sigmaTrial, D, epsilon, element[e].epsilonP, Dn);
+                    trialStress(sigmaTrial, D, epsilon, element[e].epsilonP, Dn, i);
 
                     // Find deviatoric stress, von Mises equivalent stress, yield stress adjusted for existing plastic strain, and find von Mises Yield Function
                     deviatoricStress2D(sDeviatoric, sigmaTrial);
                     sigmaEq = vonMisesEquivalentStress2D(sDeviatoric);
-                    sigmaYield = plasticCorrectedYieldStress(sigmaYieldInitial, H, element[e].epsilonBarP);
+                    sigmaYield = plasticCorrectedYieldStress(sigmaYieldInitial, H, element[e].epsilonBarP[i]);
 
                     // Check von Mises Yield Function for yielding of the node. If elastic, use elastic material stiffness matrix. If plastic, run return mapping.
                     f = vonMisesYieldFunction(sigmaEq, sigmaYield);
@@ -252,14 +254,31 @@ int main (char *args)
                     if (f > 0) // f > 0 -> yield
                     {
                         // Return mapping processes
-                        unitDeviatoricStress(nUnitDeviatoric, sDeviatoric, Dn);
-                        elastoPlasticDMatrix(D, nUnitDeviatoric, H, Dn);
-                        // Plastic multiplier
-                        // Corrected trial stress
-                        // Trial plastic strain tensor
-                        // Trial plastic equivalent strain
 
-                        // Store trial values in element
+                        // Unit deviatoric stress, n
+                        unitDeviatoricStress(nUnitDeviatoric, sDeviatoric, Dn);
+
+                        // Elasto-plastic material stiffness matrix, D_ep
+                        elastoPlasticDMatrix(D, nUnitDeviatoric, H, Dn);
+
+                        // Plastic multiplier
+                        deltaGamma = plasticMultiplier(f, G, H);
+
+                        // Corrected trial stress
+                        plasticStressCorrection(sigma, sigmaTrial, nUnitDeviatoric, G, deltaGamma, Dn);
+
+                        // Trial plastic strain tensor
+                        trialPlasticStrain(trialEpsilonP, element[e].epsilonP, nUnitDeviatoric, deltaGamma, Dn, i);
+
+                        // Trial plastic equivalent strain
+                        element[e].trialEpsilonBarP[i] = trialEquivalentPlasticStrain(deltaGamma);
+
+                        // Store trial values in element, but they are not to be commited before the load step converges.
+                        for (int j = 0; j < Dn; j++)
+                        {
+                            element[e].sigma[i * element[e].gp + j] = *(sigma + j);
+                            element[e].trialEpsilonP[i * element[e].gp + j] = *(trialEpsilonP + j);
+                        }
                     }
 
                     // Calculate and append the contribution to the element stiffness matrix, Ke, for the current Gauss Point. The element stiffness matrix is summed for each element over all the Gauss Points.
@@ -269,6 +288,7 @@ int main (char *args)
                 }
 
                 // Assemble into global stiffness matrix.
+                globalStiffnessMatrix(K, Ke, element[e].nodeids, DOF, nnodesElement, Km, Kem);
                 
                 // Assemble into global internal force vector.
             }
@@ -302,60 +322,6 @@ int main (char *args)
     free(D);
     free(Ke); // Ke. element stiffness matrix
 
-    /*    
-    Step 1: Import and initialize Data
-        - Load input data: Node coords, Element connectivity, Boundary conditions, Applied load vectors, Material properties (E, v, sigma_yield_0, H)
-        - Compute and store shape functions and its derivatives in the reference space (xi, eta) (static values)
-        - Define Gauss Point locations and weights for numerical integration (static values)
-
-    Step 2: Initialize Gauss Point internal variables
-        - For each element and Gauss Point:
-            - epsilon_p = 0
-            - epsilon_bar_p = 0
-            - sigma = 0
-        - These variables will be updated as plasticity accumulates per load step
-    
-    From here, everything is within the iterator, k
-    Step 3: Newton-Raphson loop starts
-        - Apply load increment (f_ext + delta f_ext)
-        - Get the initial displacement "guess" (not actually a guess. First is the initial value, often u0 = 0, and from each step it will be incremented from the solution of the system).
-
-    Step 4: Loop over elements & Gauss points
-        - Extract the nodal displacements for the element from u, -> u_e
-        - Compute the Jacobian and B-matrix
-        - Compute the strain as epsilon = B * u_e
-        - Compute the trial stress as sigma_trial = D_e (epsilon - epsilon_p)
-        - From the trial stress, calculate the trial deviatoric stress and the von Mises equivalent stress
-        - Check the trial stress against the yield function f = sigma_eq - sigma_y, where sigma_y = sigma_y0 + H * epsilon_bar_p
-        - If f > 0 -> Plasticity (comput delta gamma, n, and D_ep), if f <= 0 -> elasticity (use D_e)
-            - if f > 0 -> Compute delta gamma = f_yield / (3 G + H)
-            - G = E / (2(1+v))
-            - Correct stress on Gauss point as sigma = sigma_trial - 2 G * delta gamma * n
-    
-    Step 5: Compute Local Element Quantities (could be included in step 4 since it is still in each element loop)
-        - Compute K_e = sum(gp) Btrans D(e / ep determined in step 4) B * detJ * weight(gp)
-        - Compute f_int_e = sum(gp) Btrans * sigma * detJ * weight(gp)
-    
-    Step 6: Assemble global system
-        - Assemble global stiffness matrix, K
-        - Assemble global internal force vector
-
-    Step 7: Solve system and update displacement
-        - r^(k) = f_ext^(k) - f_int^(k)
-        - K^(k) * delta u^(k) = r^(k)
-        - Increment u^(k+1) = u^(k) + delta u^(k)
-
-    Step 8: Convergence check for the current step
-        - Check that abs(r^(k)) < tolerance or abs(delta u^(k)) is small
-        - if converged ->
-            - Commit values for epsilon_p, epsilon_bar_p and sigma for each Gauss Point
-            - Add a load increment and go to the next Newton-Raphson step. (Go to step 3 and add to f_ext).
-        - else 
-            - Go back to step 3 but do not add a load increment if not converged!
-    
-    Step 9: Once the entire load is applied, and the system has converged
-        - Run post-processing to extra results in useful formats.
-    */
-
+   
     return 0;
 }
