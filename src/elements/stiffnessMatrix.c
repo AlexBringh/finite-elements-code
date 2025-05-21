@@ -144,18 +144,15 @@ int elementStiffnessMatrix (double *Ke, int nnodesElement, int DOF, double *B, d
 }
 
 
-int initElementStiffnessMatrix (double *Ke, int nnodesElement, int DOF)
+int initElementStiffnessMatrix (double *Ke, int Kem)
 {
     /*
         Initializes / resets all values of the Ke matrix to 0. Determines the size by the number of nodes per element, times the degrees of freedom per node.
     */
-    int Kem = nnodesElement * DOF;
-    for (int i = 0; i < Kem; i++)
+   
+    for (int i = 0; i < Kem * Kem; i++)
     {
-        for (int j = 0; j < Kem; j++)
-        {
-            *(Ke + i * Kem + j) = 0;
-        }
+        *(Ke + i) = 0;
     }
 }
 
@@ -170,12 +167,9 @@ int initGlobalStiffnessMatrix (double *K, int Km)
         double *K -> pointer to global stiffness matrix in array-form.K
         int Km -> number of columns (rows) of the matrix.
     */
-    for (int i = 0; i < Km; i++)
+    for (int i = 0; i < Km * Km; i++)
     {
-        for (int j = 0; j < Km; j++)
-        {
-            *(K + i * Km + j) = 0;
-        }
+        *(K + i) = 0;
     }
 }
 

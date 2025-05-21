@@ -14,7 +14,14 @@ int initQuadElement ()
 int displacementStrain (double *epsilon, double *B, double *ue, int nnodesElement, int dof)
 {
     /*
-        TODO: Documentation
+        Calculates the strain at the Gauss Point determined by the displacement of the nodes in the element, and the B matrix calculated for the current Gauss Point.
+
+        Inputs:
+        double *epsilon   -> Pointer to strain at the current Gauss Point. Results are stored here.
+        double *B         -> Pointer to B matrix at the current Gauss Point.
+        double *ue        -> Pointer to element displacement vector.
+        int nnodesElement -> Number of nodes in the element.
+        int dof           -> Degrees of freedom of the nodes.
     */
 
     // Init / reset the strain tensor, epsilon

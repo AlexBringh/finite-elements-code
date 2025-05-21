@@ -100,6 +100,23 @@ int main (char *args)
     int DOF = 2; // Degrees of freedom per node
     int dim = 2; // Dimensions of the system
     int Km = nnodes * DOF; // Number of rows / columns of the global stiffness matrix.
+    double *K;
+
+    int maxNodesBeforeSkyline = 10000;
+
+    if (Km * Km > maxNodesBeforeSkyline)
+    {
+        // Skyline
+    }
+    else
+    {
+        // Normal matrix
+
+        K = malloc(Km * Km * sizeof(double));
+        initGlobalStiffnessMatrix(K, Km); // Set all values in the matrix to 0.
+    }
+
+    // Determine whether to use normal matrix or skyline matrix.
 
     // Allocate memory for the 'element' and 'node' structs.
     quadElement *element = malloc(nelements * sizeof(quadElement));
@@ -132,6 +149,7 @@ int main (char *args)
     int Kem = nnodesElement * DOF;
     int Ken = Kem;
     double *Ke = malloc(Kem * Ken * sizeof(double));
+    
 
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
@@ -194,7 +212,7 @@ int main (char *args)
                 printf("\t\tStep: %1d, Load Step: %1d . . . Analysing element #%1d . . . \n", k, l, e);
 
                 // Init / reset K_e for current element
-                initElementStiffnessMatrix(Ke, nnodesElement, DOF);
+                initElementStiffnessMatrix(Ke, Kem);
 
                 // Get the displacements for the element's nodes, u_e, and store them. One value for each DOF.
                 for (int i = 0; i < nnodesElement; i++)
