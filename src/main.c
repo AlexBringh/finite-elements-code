@@ -181,7 +181,7 @@ int main (char *args)
         This marks the actual start of the steps of the Finite Element code...
     */
     // Initialize -> Material Properties -> Stress and Strain Variables -> Initial Conditions and Read Input Data (Geometry, Boundary Conditions & Loading)
-
+    
 
     
     // Gets the shape functions for a 2D quad element. Needs only be ran once as long as all the elements are the same.

@@ -1,11 +1,56 @@
 #include "elements.h"
 #include "matrixArithmetic.h"
 
-int initQuadElement ()
+int initQuadElement (quadElement *element, int id, int gp, int nnodesElement, int dof, int *nodeids, double *coords)
 {
     /*
-        TODO: Documentation
+        Initializes the struct element, allocates memory for all the internal arrays and stores the internal values. Sets accumulated- and trial strains and stresses to 0.
+
+        Inputs:
+        quadElement *element -> Pointer to current element struct. Result is stored here.
+        int id               -> Id of the element.
+        int gp               -> Number of Gauss Points in the element.
+        int nnodesElement    -> Number of nodes in the element.
+        int dof              -> Degrees of freedom of the nodes.
+        int *nodeids         -> Pointer to node ids of the element nodes.
+        int *coords          -> Pointer to global coordinates of the nodes.
     */
+
+    element->id = id;
+    element->gp = gp;
+    element->nnodes = nnodesElement;
+    element->dof = dof;
+
+    element->epsilonBarP = 0;
+    element->trialEpsilonBarP = 0;
+
+    element->nodeids = malloc(nnodesElement * sizeof(int));
+    element->coords = malloc(nnodesElement * dof * sizeof(double));
+    element->sigma = malloc(3 * sizeof(double));
+    element->epsilonP = malloc(3 * sizeof(double));
+    element->trialSigma = malloc(3 * sizeof(double));
+    element->trialEpsilonP = malloc(3 * sizeof(double));
+
+    // Store element ids.
+    for (int i = 0; i < nnodesElement; i++)
+    {
+        element->nodeids[i] = *(nodeids + i);
+
+        // Store coords of the nodes
+        for (int d = 0; d < dof; d++)
+        {
+            element->nodeids[i * dof + d] = *(coords + i * dof + d);
+        }
+    }
+
+    // Init stress and strain
+    for (int i = 0; i < 3; i++)
+    {
+        element->sigma[i] = 0;
+        element->trialSigma[i] = 0;
+        element->epsilonP[i] = 0;
+        element->trialEpsilonP[i] = 0;
+    }
 
     return 0;
 }

@@ -8,7 +8,7 @@ typedef struct {
     int nnodes; // Number of nodes
     int dof; // Degrees of freedom per node
     int *nodeids; // Node connectivity numbering
-    int *coords; // Global coordinates of connected nodes.
+    double *coords; // Global coordinates of connected nodes.
 
     // Accumulated / commited stress and plastic strain.
     double *sigma;
@@ -22,6 +22,7 @@ typedef struct {
 
 } quadElement;
 
+int initQuadElement (quadElement *element, int id, int gp, int nnodesElement, int dof, int *nodeids, double *coords);
 int displacementStrain (double *epsilon, double *B, double *ue, int nnodesElement, int dof);
 
 
