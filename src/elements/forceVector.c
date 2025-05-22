@@ -104,9 +104,3 @@ void globalInternalForceVector (double *Fint, double *FintE, int *nodeids, int d
 
     free(globDOFs);
 }
-
-
-void globalExternalForceVector ()
-{
-
-}

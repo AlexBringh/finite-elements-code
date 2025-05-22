@@ -23,6 +23,7 @@ typedef struct {
 } quadElement;
 
 int initQuadElement (quadElement *element, int id, int gp, int nnodesElement, int dof, int *nodeids, double *coords);
+void commitTrialValuesAtGaussPoints (quadElement *element, int nelements);
 int displacementStrain (double *epsilon, double *B, double *ue, int nnodesElement, int dof);
 
 

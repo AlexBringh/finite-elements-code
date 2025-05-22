@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "stiffnessMatrix.h"
+#include "skyline.h"
 #include "matrixArithmetic.h"
 #include "elements.h"
 
@@ -239,5 +240,10 @@ int globalStiffnessMatrix (double *K, double *Ke, int *nodeids, int dof, int nno
     }
 
     free(globDOFs);
+}
+
+int globalSkylineStiffnessMatrix (skylineMatrix *K, double *Ke, int *nodeids, int dof, int nnodesElement, int Kem)
+{
+    
 }
 

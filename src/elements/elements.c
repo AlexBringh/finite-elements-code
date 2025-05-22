@@ -64,6 +64,30 @@ int initQuadElement (quadElement *element, int id, int gp, int nnodesElement, in
     return 0;
 }
 
+void commitTrialValuesAtGaussPoints (quadElement *element, int nelements)
+{
+    /*
+        Moves the trial values to commited values for all Gauss Points in all elements.
+
+        Inputs:
+        quadElement *element  ->  Pointer to all element structs. 
+        int nelements         ->  Number of elements.
+    */
+
+    for (int e = 0; e < nelements; e++)
+    {
+        for (int i = 0; i < element[e].gp; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                element[e].sigma[i * element[e].gp + j] = element[e].trialSigma[i * element[e].gp + j];
+                element[e].epsilonP[i * element[e].gp + j] = element[e].trialEpsilonP[i * element[e].gp + j];
+            }
+            element[e].epsilonBarP[i] = element[e].trialEpsilonBarP[i];
+        }
+    }
+}
+
 
 int displacementStrain (double *epsilon, double *B, double *ue, int nnodesElement, int dof)
 {

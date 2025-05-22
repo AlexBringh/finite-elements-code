@@ -17,7 +17,15 @@ int backwardSubstitution (double *x, double *y, double *U, int m);
 
 int croutReduction (double *A, int m, double *x, double *B)
 {
-    // TODO documentation
+    /*
+        Performs Crout Reduction with partial pivoting.
+
+        Inputs:
+        double *A -> Pointer to matrix holding the system of equations to be solved, of size m x m.
+        double *x -> Pointer to vector holding the unknown values to be solved for, of size m x 1.
+        double *B -> Pointer to vector holding the 
+    */
+
     int n = m; // n represents the columns of the A-matrix.
     int d = 30; // Constant used for printing the right amount of dashed lines.
 

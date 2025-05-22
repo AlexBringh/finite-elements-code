@@ -179,3 +179,8 @@ int findSkylineStartingRow (int *startRow, double *A, int m)
         *(startRow + i) = c; // Add the counter variable for the current column and continue to the next column.
     }
 }*/
+
+int resetSkylineMatrix (skylineMatrix *matrix)
+{
+    
+}

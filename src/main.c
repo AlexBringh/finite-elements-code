@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 // Local includes
+#include "croutReduction.h"
 #include "elements.h"
 #include "forceVector.h"
 #include "jacobian.h"
@@ -103,23 +104,35 @@ int main (char *args)
     int dim = 2; // Dimensions of the system
     int Km = nnodes * DOF; // Number of rows / columns of the global stiffness matrix.
     double *K;
+    skylineMatrix *Kskyline;
 
     int maxNodesBeforeSkyline = 10000;
+    int skylineSolver;
 
     if (Km * Km > maxNodesBeforeSkyline)
     {
         // Skyline
+        //Kskyline = initSkylineMatrix(Km);
+        skylineSolver = 1;
     }
     else
     {
         // Normal matrix
-
+        skylineSolver = 0;
         K = malloc(Km * Km * sizeof(double));
         initGlobalStiffnessMatrix(K, Km); // Set all values in the matrix to 0.
     }
 
-    // Allocate memory for the global internal force vector, f_int
+    // Allocate memory for the global internal force vector, f_int, the global external force vector, f_ext, and the residual, r.
     double *Fint = malloc(Km * sizeof(double));
+    double *Fext = malloc(Km * sizeof(double));
+    double *r = malloc(Km * sizeof(double));
+
+    double *Fstep = malloc(Km * sizeof(double)); // This is the vector that will hold the incremented load step.
+    for (int i = 0; i < Km; i++)
+    {
+        *(Fstep + i) = 0; // Set the intial values to 0.
+    }
 
     // Determine whether to use normal matrix or skyline matrix.
 
@@ -161,10 +174,13 @@ int main (char *args)
 
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
+    int loadIncrementSteps = 100; // Divide the increments into this many load increments.
     int maxSteps = 100;     // Maximum allowed steps for each converged step.
     int maxLoadSteps = 100; // Maximum allowed steps for each load step.
-    int stepConverged; // Check for seeing if convergence has been reached.
-    int currentLoadStep = 0; // 
+    int stepConverged = 1; // Check for seeing if convergence has been reached. Set it initially to 1, so that the first load increment will not be 0.
+    int fullLoadApplied = 0; // Check for seeing if the entire load is applied. Set initially to 0, and set to 1 only if all the Fload[i] >= Fext[i].
+    int solutionFound = 0; // Check for seeing if the solution is found and converged (1), or if the iteration simply ended because the maxSteps was reached.
+    int residualThreshold = 0.1; // Threshold for the absolute value of the residual for the convergence criteria.
 
     // Stresses and strains
     double *epsilon = malloc(nnodesElement * DOF * sizeof(double));
@@ -204,27 +220,62 @@ int main (char *args)
     printf("Starting Newton-Raphson iteration.");
     for (int k = 0; k < maxSteps; k++)
     {
-        printf("Running step: %1d . . . \n", k);
+        // The following logic is complex, but it does 4 things.
+        // 1: Commit the trial values in the Gauss Point to be true values.
+        // 2: Check if all the load is applied AND the last step converged. If all values are past the mark, break out of the loop. 
+        // 3, 4: If not, apply load increment AND reset the displacement increment vector, du to 0.
+        if (stepConverged)
+        {
+            commitTrialValuesAtGaussPoints(element, nelements); // Commit trial values to commited values.
+            fullLoadApplied = 1; // Try this, if any of the values are not done, then this will be set back to 0 sometime in the for-loop.
+            for (int i = 0; i < Km; i++)
+            {
+                if ( *(Fstep + i) >= *(Fext + i) )
+                {
+                    fullLoadApplied = 0;
+                }
+                else
+                {
+                    *(Fstep + i) += *(Fext + i) / loadIncrementSteps;
+                    *(du + i) = 0;
+                }
+            }
+            if (fullLoadApplied)
+            {
+                printf("Full loads are applied and solution converged on step %d. Proceeding to post-processing . . . \n\n", stepCounter);
+                solutionFound = 1; // The solution has been found.
+                break; // Finish the loop.
+            }
+        }
+
+        printf("Running step: %d . . . \n", k);
 
         // Init / reset global stiffness matrix and global internal force vetor for the current step
-        initGlobalStiffnessMatrix(K, Km);
+        if (skylineSolver)
+        {
+            // Init / reset skyline matrix
+            resetSkylineMatrix(Kskyline);
+        }
+        else
+        {
+            // Init / reset regular matrix
+            initGlobalStiffnessMatrix(K, Km);
+        }
         initGlobalInternalForceVector(Fint, Km);
 
-        // Apply load increment
-
-        // Set convergence check to 0 (false)
+        // Set convergence check to 0 (false) before the load steps start.
         stepConverged = 0;
 
         // Start load step
         for (int l = 0; l < maxLoadSteps; l++)
         {
-            printf("\tStep: %1d, Load Step: %1d . . . Running . . . \n\n", k, l);
+            printf("\tStep: %d, Load Step: %d . . . Running . . . \n\n", k, l);
             stepCounter += 1;
 
             // Loop through all elements
             for (int e = 0; e < nelements; e++)
             {
-                printf("\t\tStep: %1d, Load Step: %1d . . . Analysing element #%1d . . . \n", k, l, e);
+                printf("\t\tStep: %d, Load Step: %d . . . Analysing element #%d . . . \n", k, l, e);
 
                 // Init / reset K_e and F_int_e for the current element
                 initElementStiffnessMatrix(Ke, Kem);
@@ -242,7 +293,7 @@ int main (char *args)
                 // Begin looping over the Gauss Points of the elements, each loop is for the i-th Gauss Point.
                 for (int i = 0; i < element->gp; i++)
                 {
-                    printf("\t\t\tElement #%1d . . . Gauss Point #%1d", e, i);
+                    printf("\t\t\tElement #%d . . . Gauss Point #%d", e, i);
 
                     // Find the Jacobian, B matrix, and elastic D_e matrix for this Gauss Point.
                     quadJacobian(J, Jinv, j_m, detJ, sf[i].Ni, sf[i].NiPxi, sf[i].NiPeta, element[e].coords, DOF);
@@ -306,28 +357,67 @@ int main (char *args)
                 }
 
                 // Assemble into global stiffness matrix.
-                globalStiffnessMatrix(K, Ke, element[e].nodeids, DOF, nnodesElement, Km, Kem);
+                if (skylineSolver)
+                {
+                    // Assemble into skyline matrix
+                    globalSkylineStiffnessMatrix(Kskyline,Ke, element[e].nodeids, DOF, nnodesElement, Kem);
+                }
+                {
+                    // Assemble into regular matrix
+                    globalStiffnessMatrix(K, Ke, element[e].nodeids, DOF, nnodesElement, Km, Kem);
+                }
                 
                 // Assemble into global internal force vector.
                 globalInternalForceVector(Fint, FintE, element[e].nodeids, DOF, nnodesElement, Km, Kem);
             }
 
-            // Solve system for current applied load.
-
-            // Check for convergence
-            if (stepConverged)
+            // Compute the residual, r, as f_ext - f_int, and check convergence
+            stepConverged = 1; // Make this prediction now, and correct it if ANY of the values in the residual are not below the threshold.
+            for (int i = 0; i < Km; i++)
             {
-                printf("\tStep: %1d, Load Step: %1d . . . CONVERGED . . . \n\n", k, l);
+                *(r + i) = *(Fstep + i) - *(Fint + i);
+                if ( abs( *(r + i) ) > residualThreshold )
+                {
+                    stepConverged = 0; // If the current residual value is greater than the threshold, the solution is not converged.
+                }
+            }
+
+            // If not converged, solve the system.
+            if (!stepConverged)
+            {
+                // Solve system for current applied load.
+                if (skylineSolver)
+                {
+                    // Solve skyline matrix
+                    croutSkyline(Kskyline);
+                }
+                else
+                {
+                    // Solve regular matrix
+                    croutReduction(K, Km, du, r);
+                }
+            }
+            else
+            {
+                printf("\tStep: %d, Load Step: %d . . . CONVERGED . . . \n\n", k, l);
                 break;
             }
         }
 
-        printf("\n\nNewton-Raphson iteration has concluded after %1d steps! \n\n", stepCounter);
+        printf("\n\nNewton-Raphson iteration has concluded after %d steps! \n\n", stepCounter);
  
     }
 
 
     // Post-processing
+    if (solutionFound)
+    {
+
+    }
+    else
+    {
+        // No solution was found. Print error message.
+    }
 
 
     // Freeing some variables from memory now that they are no longer needed.
