@@ -4,14 +4,16 @@
 //	Date of creation: 16.10.2024
 //
 
-// System includes
+// Standard Module includes
 #include <stdio.h>
 
-// Local includes
+// FEM module includes
 #include "croutReduction.h"
 #include "elements.h"
 #include "forceVector.h"
+#include "inputData.h"
 #include "jacobian.h"
+#include "postProcessing.h"
 #include "returnMapping.h"
 #include "stiffnessMatrix.h"
 #include "skyline.h"
@@ -139,24 +141,30 @@ int main (char *args)
     // Allocate memory for the 'element' and 'node' structs.
     quadElement *element = malloc(nelements * sizeof(quadElement));
 
-    // Allocate memory for the global-, increment- and element displacement vector.
+    // Allocate memory for the global-, increment- and element displacement vector, as well as the fixed displacement indices.
     double *u = malloc(nnodes * DOF * sizeof(double));
     double *du = malloc(nnodes * DOF * sizeof(double));
     double *ue = malloc(nnodesElement * DOF * sizeof(double));
+    int *uFixed = malloc(nnodes * DOF * sizeof(int));
+
+    // Initialize the global displacement vector.
+    for (int i = 0; i < Km; i++)
+    {
+        *(u + i) = 0; 
+    }
 
     // Get the shape functions for 2D Quad elements
     shapeFunctions2D *sf = malloc(gp * sizeof(shapeFunctions2D));
 
     // Allocate memory for the Jacobian matrix, its determinant and the inverse.
-    int j_m = 2; // Representing the size, m, in a m*m Jacobian matrix.
-    double *J = malloc(j_m * j_m * sizeof(double)); // This is initialized with values in the Jacobian function.
+    int Jn = 2; // Representing the size, m, in a m*m Jacobian matrix.
+    double *J = malloc(Jn * Jn * sizeof(double)); // This is initialized with values in the Jacobian function.
     double *detJ = malloc(sizeof(double)); // Store the determinant value of the Jacobian here.
-    double *Jinv = malloc (j_m * j_m * sizeof(double)); // This is also initialized in the Jacobian function.
+    double *Jinv = malloc (Jn * Jn * sizeof(double)); // This is also initialized in the Jacobian function.
 
     // Allocate memory for the B matrix, B transpose, D and the element stiffness matrix.
-    int nlocnode = 4; // Number of local nodes per element.
     int Bm = 3; // Rows of the B matrix.
-    int Bn = nlocnode * 2; // Each node adds 2 columns to the B-matrix.
+    int Bn = nnodesElement * 2; // Each node adds 2 columns to the B-matrix.
     int Dm = 3;
     int Dn = 3;
     double *B = malloc(Bn * Bm * sizeof(double)); 
@@ -174,17 +182,15 @@ int main (char *args)
 
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
-    int loadIncrementSteps = 100; // Divide the increments into this many load increments.
-    int maxSteps = 100;     // Maximum allowed steps for each converged step.
+    int loadIncrementSteps = 100; // Number of load increment steps
     int maxLoadSteps = 100; // Maximum allowed steps for each load step.
     int stepConverged = 1; // Check for seeing if convergence has been reached. Set it initially to 1, so that the first load increment will not be 0.
     int fullLoadApplied = 0; // Check for seeing if the entire load is applied. Set initially to 0, and set to 1 only if all the Fload[i] >= Fext[i].
-    int solutionFound = 0; // Check for seeing if the solution is found and converged (1), or if the iteration simply ended because the maxSteps was reached.
+    int solutionFound = 0; // Check for seeing if the solution is found and converged (1), or if the iteration simply ended because the max number of steps was reached.
     int residualThreshold = 0.1; // Threshold for the absolute value of the residual for the convergence criteria.
 
     // Stresses and strains
     double *epsilon = malloc(nnodesElement * DOF * sizeof(double));
-
     double *sigmaTrial = malloc(Dn * sizeof(double)); // Trial stress
     double *sDeviatoric = malloc(Dn * sizeof(double)); // Deviatoric stress
     double *nUnitDeviatoric = malloc(Dn * sizeof(double));
@@ -218,7 +224,7 @@ int main (char *args)
 
     // Newton-Raphson Iterator
     printf("Starting Newton-Raphson iteration.");
-    for (int k = 0; k < maxSteps; k++)
+    for (int k = 0; k < loadIncrementSteps; k++)
     {
         // The following logic is complex, but it does 4 things.
         // 1: Commit the trial values in the Gauss Point to be true values.
@@ -272,6 +278,12 @@ int main (char *args)
             printf("\tStep: %d, Load Step: %d . . . Running . . . \n\n", k, l);
             stepCounter += 1;
 
+            // Init / Reset increment displacement vector.
+            for (int i = 0; i < Km; i++)
+            {
+                *(du + i) = 0;
+            }
+
             // Loop through all elements
             for (int e = 0; e < nelements; e++)
             {
@@ -296,7 +308,7 @@ int main (char *args)
                     printf("\t\t\tElement #%d . . . Gauss Point #%d", e, i);
 
                     // Find the Jacobian, B matrix, and elastic D_e matrix for this Gauss Point.
-                    quadJacobian(J, Jinv, j_m, detJ, sf[i].Ni, sf[i].NiPxi, sf[i].NiPeta, element[e].coords, DOF);
+                    quadJacobian(J, Jinv, Jn, detJ, sf[i].Ni, sf[i].NiPxi, sf[i].NiPeta, element[e].coords, DOF);
                     quadBMatrix(B, Btrans, Jinv, sf[i].NiPxi, sf[i].NiPeta);
                     elasticDMatrixPlaneStrain(D, E, v);
 
@@ -361,21 +373,31 @@ int main (char *args)
                 {
                     // Assemble into skyline matrix
                     globalSkylineStiffnessMatrix(Kskyline,Ke, element[e].nodeids, DOF, nnodesElement, Kem);
+                    applyFixedDisplacementSkylineStiffnessMatrix(uFixed, Ke);
                 }
                 {
                     // Assemble into regular matrix
                     globalStiffnessMatrix(K, Ke, element[e].nodeids, DOF, nnodesElement, Km, Kem);
+                    applyFixedDisplacementStiffnessMatrix(uFixed, K, Km);
                 }
                 
                 // Assemble into global internal force vector.
                 globalInternalForceVector(Fint, FintE, element[e].nodeids, DOF, nnodesElement, Km, Kem);
             }
 
-            // Compute the residual, r, as f_ext - f_int, and check convergence
+            // Compute the residual, r, as f_ext - f_int
+            for (int i = 0; i < Km; i++)
+            {
+                *(r + i) = *(Fstep + i) - *(Fint + i);   
+            }
+
+            // Set fixed displacements in the residual vector
+            applyFixedDisplacementResidualVector(uFixed, r, Km);
+
+            // Check for convergence
             stepConverged = 1; // Make this prediction now, and correct it if ANY of the values in the residual are not below the threshold.
             for (int i = 0; i < Km; i++)
             {
-                *(r + i) = *(Fstep + i) - *(Fint + i);
                 if ( abs( *(r + i) ) > residualThreshold )
                 {
                     stepConverged = 0; // If the current residual value is greater than the threshold, the solution is not converged.
@@ -396,6 +418,12 @@ int main (char *args)
                     // Solve regular matrix
                     croutReduction(K, Km, du, r);
                 }
+
+                // Add the displacement increment to the global displacement vector
+                for (int i = 0; i < Km; i++)
+                {
+                    *(u + i) += *(du + i);
+                }
             }
             else
             {
@@ -403,34 +431,47 @@ int main (char *args)
                 break;
             }
         }
-
-        printf("\n\nNewton-Raphson iteration has concluded after %d steps! \n\n", stepCounter);
- 
     }
+
+    printf("\n\nNewton-Raphson iteration has concluded after %d steps! \n\n", stepCounter);
 
 
     // Post-processing
     if (solutionFound)
     {
-
+        postProcessingElastoPlastic (u, element, sf, Km);
     }
     else
     {
         // No solution was found. Print error message.
+        printf("No solutions were found for the analysis.");
     }
 
 
     // Freeing some variables from memory now that they are no longer needed.
-    free(element); // Element structs
-    free(sf); // Shape functions
-    free(J); // Jacobian matrix.
-    free(detJ); // Determinant of the Jacobian matrix.
-    free(Jinv); // Inverse matrix of the Jacobian.
-    free(B); // B matrix
-    free(Btrans); // B transpose
+    free(element); 
+    free(sf); 
+    free(J); 
+    free(detJ); 
+    free(Jinv); 
+    free(B); 
+    free(Btrans);
     free(D);
-    free(Ke); // Ke. element stiffness matrix
-
+    free(u);
+    free(du);
+    free(ue);
+    free(Ke);
+    free(K);
+    free(Kskyline);
+    free(r);
+    free(Fint);
+    free(Fext);
+    free(FintE);
+    free(epsilon);
+    free(sigma);
+    free(sigmaTrial);
+    free(sDeviatoric);
+    free(nUnitDeviatoric);
    
     return 0;
 }

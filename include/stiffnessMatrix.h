@@ -8,6 +8,8 @@ int elasticDMatrixPlaneStress (double *D, double E, double v);
 int elasticDMatrixPlaneStrain (double *D, double E, double v);
 int initGlobalStiffnessMatrix (double *K, int Km);
 int globalStiffnessMatrix (double *K, double *Ke, int *nodeids, int dof, int nnodesElement, int Km, int Kem);
+void applyFixedDisplacementStiffnessMatrix (int *uFixed, double *K, int Km);
 int globalSkylineStiffnessMatrix (skylineMatrix *K, double *Ke, int *nodeids, int dof, int nnodesElement, int Kem);
+void applyFixedDisplacementSkylineStiffnessMatrix (int *uFixed, skylineMatrix *K);
 
 #endif

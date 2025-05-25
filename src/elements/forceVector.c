@@ -104,3 +104,8 @@ void globalInternalForceVector (double *Fint, double *FintE, int *nodeids, int d
 
     free(globDOFs);
 }
+
+void applyFixedDisplacementResidualVector (int *uFixed, double *r, int Km)
+{
+
+}

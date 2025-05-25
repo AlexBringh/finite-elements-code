@@ -242,8 +242,18 @@ int globalStiffnessMatrix (double *K, double *Ke, int *nodeids, int dof, int nno
     free(globDOFs);
 }
 
+void applyFixedDisplacementStiffnessMatrix (int *uFixed, double *K, int Km)
+{
+
+}
+
 int globalSkylineStiffnessMatrix (skylineMatrix *K, double *Ke, int *nodeids, int dof, int nnodesElement, int Kem)
 {
     
+}
+
+void applyFixedDisplacementSkylineStiffnessMatrix (int *uFixed, skylineMatrix *K)
+{
+
 }
 
