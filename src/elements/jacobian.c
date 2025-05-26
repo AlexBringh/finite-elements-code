@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "jacobian.h"
 #include "shapeFunctions.h"
 
@@ -43,10 +45,10 @@ int quadJacobian (double *J, double *Jinv, int m, double *detJ, double *Ni, doub
     *detJ = *(J + 0) * *(J + 3) - *(J + 2) * *(J + 1); // Determinant of a 2x2 matrix is J_0 * J_3 - J_2 * J_1
 
     // Assemble the inverse Jacobian matrix.
-    *(Jinv + 0) =  1 / *(detJ) * *(J + 3); 
-    *(Jinv + 1) = -1 / *(detJ) * *(J + 1);
-    *(Jinv + 2) = -1 / *(detJ) * *(J + 2);
-    *(Jinv + 3) =  1 / *(detJ) * *(J + 0); 
+    *(Jinv + 0) =  1.0 / *(detJ) * *(J + 3); 
+    *(Jinv + 1) = -1.0 / *(detJ) * *(J + 1);
+    *(Jinv + 2) = -1.0 / *(detJ) * *(J + 2);
+    *(Jinv + 3) =  1.0 / *(detJ) * *(J + 0); 
     
     return 0;
 }

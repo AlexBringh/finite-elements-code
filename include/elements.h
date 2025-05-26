@@ -1,6 +1,28 @@
 #ifndef ELEMENTS_H
 #define ELEMENTS_H
 
+#include <stdlib.h>
+
+typedef struct {
+    int id;
+    double E;
+    double v;
+    double H;
+    double yield;
+} material;
+
+
+typedef struct {
+    int id;
+    double x;
+    double y;
+    double z;
+    int material;
+    int dof;
+    int dim;
+} node;
+
+
 typedef struct {
 
     int id; // Element id
@@ -22,7 +44,6 @@ typedef struct {
 
 } quadElement;
 
-int initQuadElement (quadElement *element, int id, int gp, int nnodesElement, int dof, int *nodeids, double *coords);
 void commitTrialValuesAtGaussPoints (quadElement *element, int nelements);
 int displacementStrain (double *epsilon, double *B, double *ue, int nnodesElement, int dof);
 

@@ -1,4 +1,6 @@
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "shapeFunctions.h"
 
@@ -13,7 +15,6 @@ int quadShapeFunctions (shapeFunctions2D *sf)
         However some efficiency and beauty is sacrificed for the sake of clarity of where the values are comming from.
         The calculations of the local shape functions is only done once, anyway.
     */
-    // TODO: Documentation
 
 
     // Define constants for 2D quad elements.
@@ -47,20 +48,20 @@ int quadShapeFunctions (shapeFunctions2D *sf)
     // Loop through each Gauss Point
     for (int i = 0; i < gp; i++)
     {
-        sf[i].Ni[0] = 1 / 4 * (1 - *(xi + i)) * (1 - *(eta + i)); // N1
-        sf[i].Ni[1] = 1 / 4 * (1 + *(xi + i)) * (1 - *(eta + i)); // N2
-        sf[i].Ni[2] = 1 / 4 * (1 + *(xi + i)) * (1 + *(eta + i)); // N3
-        sf[i].Ni[3] = 1 / 4 * (1 - *(xi + i)) * (1 + *(eta + i)); // N4
+        sf[i].Ni[0] = 1.0 / 4.0 * (1 - *(xi + i)) * (1 - *(eta + i)); // N1
+        sf[i].Ni[1] = 1.0 / 4.0 * (1 + *(xi + i)) * (1 - *(eta + i)); // N2
+        sf[i].Ni[2] = 1.0 / 4.0 * (1 + *(xi + i)) * (1 + *(eta + i)); // N3
+        sf[i].Ni[3] = 1.0 / 4.0 * (1 - *(xi + i)) * (1 + *(eta + i)); // N4
 
-        sf[i].NiPxi[0] = - 1 / 4 * (1 - *(eta + i)); // N1Pxi
-        sf[i].NiPxi[1] =   1 / 4 * (1 - *(eta + i)); // N2Pxi
-        sf[i].NiPxi[2] =   1 / 4 * (1 + *(eta + i)); // N3Pxi
-        sf[i].NiPxi[3] = - 1 / 4 * (1 + *(eta + i)); // N4Pxi
+        sf[i].NiPxi[0] = - 1.0 / 4.0 * (1 - *(eta + i)); // N1Pxi
+        sf[i].NiPxi[1] =   1.0 / 4.0 * (1 - *(eta + i)); // N2Pxi
+        sf[i].NiPxi[2] =   1.0 / 4.0 * (1 + *(eta + i)); // N3Pxi
+        sf[i].NiPxi[3] = - 1.0 / 4.0 * (1 + *(eta + i)); // N4Pxi
 
-        sf[i].NiPeta[0] = - 1 / 4 * (1 - *(xi + i)); // N1Peta
-        sf[i].NiPeta[1] = - 1 / 4 * (1 + *(xi + i)); // N2Peta
-        sf[i].NiPeta[2] =   1 / 4 * (1 + *(xi + i)); // N3Peta
-        sf[i].NiPeta[3] =   1 / 4 * (1 - *(xi + i)); // N4Peta
+        sf[i].NiPeta[0] = - 1.0 / 4.0 * (1 - *(xi + i)); // N1Peta
+        sf[i].NiPeta[1] = - 1.0 / 4.0 * (1 + *(xi + i)); // N2Peta
+        sf[i].NiPeta[2] =   1.0 / 4.0 * (1 + *(xi + i)); // N3Peta
+        sf[i].NiPeta[3] =   1.0 / 4.0 * (1 - *(xi + i)); // N4Peta
 
         sf[i].weight = 1.0; // w, integration weight
     }

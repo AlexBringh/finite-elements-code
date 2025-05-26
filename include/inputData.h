@@ -3,9 +3,7 @@
 
 #include "elements.h"
 
-int loadMeshSize (char *path, int *nelements, int *nnodes, int *nnodesElement);
-int loadMaterialData (char *path, double *E, double *v, double *sigmaYieldInitial, double *H);
-int loadGeometry (char *path, quadElement *element, int *nelements);
-int inputData (quadElement *element, int nElements, int nnodesElement);
+int readCSV(const char *filename, node **nodes_out, int *nnodes_out, int *nnodesElement, int *nelements, int *gp, material **materials_out, int *nmaterials_out, int **uFixed_out, double **fApplied_out);
+int readElements(const char *filename, quadElement **elements_out, int *nelements_out, node *nodes, int nnodes, int gp, int nnodes_per_elem, int dof);
 
 #endif  

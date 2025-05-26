@@ -87,9 +87,7 @@ int main (char *args)
 
 
     // DEFINING VARIABLES AND ALLOCATING MEMORY FOR THE PROCESSES
-
-
-
+  
     // Material properties
     double E; // Young's Modulus
     double v; // Poisson's ratio
@@ -98,13 +96,45 @@ int main (char *args)
     double G = shearModulus(E, v);
     
     // Constant values for the analysis
-    int gp = 4; // Gauss Points per element
-    int nelements = 100; // Number of elements in the mesh.
-    int nnodesElement = 4; // Nodes per element
-    int nnodes = 200; // Number of nodes in the mesh.
-    int DOF = 2; // Degrees of freedom per node
-    int dim = 2; // Dimensions of the system
+    int gp; // Gauss Points per element
+    int nelements; // Number of elements in the mesh.
+    int nnodesElement; // Nodes per element
+    int nnodes; // Number of nodes in the mesh.
+    int DOF; // Degrees of freedom per node
+    int dim; // Dimensions of the system
+    int nmaterials;
+
+    node *nodes = NULL;
+    material *materials = NULL;
+    quadElement *elements = NULL;
+
+    int *uFixed = NULL;
+    double *Fext = NULL;
+
+    // Load data
+    if (readCSV("data.csv", &nodes, &nnodes, &nnodesElement, &nelements, &gp, &materials, &nmaterials, &uFixed, &Fext)) {
+        return 1;
+    }
+    readElements("data.csv", &elements, &nelements, nodes, nnodes, gp, nnodesElement, DOF);
+
+    DOF = nodes[0].dof;
+    dim = nodes[0].dim;
+    E = materials[0].E;
+    v = materials[0].v;
+    H = materials[0].H;
+    sigmaYieldInitial = materials[0].yield;
     int Km = nnodes * DOF; // Number of rows / columns of the global stiffness matrix.
+    int Kem = nnodesElement * DOF;
+
+    printf("System data: NNodes:%d, NElements:%d, NNodesElement:%d, DOF:%d, Dimensions:%d, NMaterials:%d, GloablDOFs:%d \n", nnodes, nelements, nnodesElement, DOF, dim, nmaterials, Km);
+
+    printf("node\t\tu_x_fixed\tu_y_fixed\tf_x_ext\t\tf_y_ext \n");
+    for (int i = 0; i < nnodes; i++)
+    {
+        printf("%d\t\t%d\t\t%d\t\t%.2f\t\t%.2f \n", i, *(uFixed + i*DOF + 0), *(uFixed + i*DOF + 1), *(Fext + i * DOF + 0), *(Fext + i * DOF + 1));
+    }
+
+    
     double *K;
     skylineMatrix *Kskyline;
 
@@ -121,137 +151,104 @@ int main (char *args)
     {
         // Normal matrix
         skylineSolver = 0;
-        K = malloc(Km * Km * sizeof(double));
+        K = calloc(Km * Km, sizeof(double));
         initGlobalStiffnessMatrix(K, Km); // Set all values in the matrix to 0.
     }
 
     // Allocate memory for the global internal force vector, f_int, the global external force vector, f_ext, and the residual, r.
-    double *Fint = malloc(Km * sizeof(double));
-    double *Fext = malloc(Km * sizeof(double));
-    double *r = malloc(Km * sizeof(double));
-
-    double *Fstep = malloc(Km * sizeof(double)); // This is the vector that will hold the incremented load step.
-    for (int i = 0; i < Km; i++)
-    {
-        *(Fstep + i) = 0; // Set the intial values to 0.
-    }
-
-    // Allocate memory for the 'element' and 'node' structs.
-    quadElement *element = malloc(nelements * sizeof(quadElement));
+    double *Fint = calloc(Km, sizeof(double));
+    double *r = calloc(Km, sizeof(double));
+    double *Fstep = calloc(Km, sizeof(double)); // This is the vector that will hold the incremented load step.
 
     // Allocate memory for the global-, increment- and element displacement vector, as well as the fixed displacement indices.
-    double *u = malloc(nnodes * DOF * sizeof(double));
-    double *du = malloc(nnodes * DOF * sizeof(double));
-    double *ue = malloc(nnodesElement * DOF * sizeof(double));
-    int *uFixed = malloc(nnodes * DOF * sizeof(int));
-
-    // Initialize the global displacement vector.
-    for (int i = 0; i < Km; i++)
-    {
-        *(u + i) = 0; 
-    }
+    double *u = calloc(Km, sizeof(double));
+    double *du = calloc(Km,  sizeof(double));
+    double *ue = calloc(Kem, sizeof(double));
 
     // Get the shape functions for 2D Quad elements
     shapeFunctions2D *sf = malloc(gp * sizeof(shapeFunctions2D));
 
     // Allocate memory for the Jacobian matrix, its determinant and the inverse.
     int Jn = 2; // Representing the size, m, in a m*m Jacobian matrix.
-    double *J = malloc(Jn * Jn * sizeof(double)); // This is initialized with values in the Jacobian function.
-    double *detJ = malloc(sizeof(double)); // Store the determinant value of the Jacobian here.
-    double *Jinv = malloc (Jn * Jn * sizeof(double)); // This is also initialized in the Jacobian function.
+    double *J = calloc(dim * dim, sizeof(double)); // This is initialized with values in the Jacobian function.
+    double *detJ = calloc(1, sizeof(double)); // Store the determinant value of the Jacobian here.
+    double *Jinv = calloc(dim * dim, sizeof(double)); // This is also initialized in the Jacobian function.
 
     // Allocate memory for the B matrix, B transpose, D and the element stiffness matrix.
     int Bm = 3; // Rows of the B matrix.
     int Bn = nnodesElement * 2; // Each node adds 2 columns to the B-matrix.
-    int Dm = 3;
     int Dn = 3;
-    double *B = malloc(Bn * Bm * sizeof(double)); 
-    double *Btrans = malloc(Bn * Bm * sizeof(double));
-    double *D = malloc(Dm * Dn * sizeof(double));
+    double *B = calloc(Bn * Bm, sizeof(double)); 
+    double *Btrans = calloc(Bn * Bm, sizeof(double));
+    double *D = calloc(Dn * Dn, sizeof(double));
 
     // Allocate memory for the element stiffness matrix, Ke
-    int Kem = nnodesElement * DOF;
-    int Ken = Kem;
-    double *Ke = malloc(Kem * Ken * sizeof(double));
+    double *Ke = calloc(Kem * Kem, sizeof(double));
 
     // Allocate memory for the element internal force vector, FintE
-    double *FintE = malloc(Kem * sizeof(double));
+    double *FintE = calloc(Kem, sizeof(double));
     
 
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
-    int loadIncrementSteps = 100; // Number of load increment steps
+    int loadIncrementSteps = 5; // Number of load increment steps
     int maxLoadSteps = 100; // Maximum allowed steps for each load step.
     int stepConverged = 1; // Check for seeing if convergence has been reached. Set it initially to 1, so that the first load increment will not be 0.
     int fullLoadApplied = 0; // Check for seeing if the entire load is applied. Set initially to 0, and set to 1 only if all the Fload[i] >= Fext[i].
     int solutionFound = 0; // Check for seeing if the solution is found and converged (1), or if the iteration simply ended because the max number of steps was reached.
-    int residualThreshold = 0.1; // Threshold for the absolute value of the residual for the convergence criteria.
+    double residualThreshold = 0.1; // Threshold for the absolute value of the residual for the convergence criteria.
+    double dispIncrThreshold = 1; // Largest displacement increment before solution is thrown.
 
     // Stresses and strains
-    double *epsilon = malloc(nnodesElement * DOF * sizeof(double));
-    double *sigmaTrial = malloc(Dn * sizeof(double)); // Trial stress
-    double *sDeviatoric = malloc(Dn * sizeof(double)); // Deviatoric stress
-    double *nUnitDeviatoric = malloc(Dn * sizeof(double));
-    double *sigma = malloc(Dn * sizeof(double)); // Corrected stress for Gauss Point
+    double *epsilon = calloc(nnodesElement * DOF, sizeof(double));
+    double *sigmaTrial = calloc(Dn, sizeof(double)); // Trial stress
+    double *sDeviatoric = calloc(Dn, sizeof(double)); // Deviatoric stress
+    double *nUnitDeviatoric = calloc(Dn, sizeof(double));
+    double *sigma = calloc(Dn, sizeof(double)); // Corrected stress for Gauss Point
     double sigmaEq; // von Mises equivalent stress
     double sigmaYield; // Corrected yield stress
     double f; // von Mises yield function result
     double deltaGamma;
-    double *trialEpsilonP = malloc(Dn * sizeof(double));
+    double *trialEpsilonP = calloc(Dn, sizeof(double));
     double trialEpsilonBarP;
 
 
     // END OF DEFINING VARIABLES AND ALLOCATING MEMORY
 
 
-    // Check how many nodes and degrees of freedom there are. If less than threshold, use normal matrix. If over threshold, use Skyline.
-    // Allocate memory for the global stiffness matrix, (using Skyline).
-
-
     /*
         This marks the actual start of the steps of the Finite Element code...
     */
-    // Initialize -> Material Properties -> Stress and Strain Variables -> Initial Conditions and Read Input Data (Geometry, Boundary Conditions & Loading)
-    int *connectivity = malloc(nnodesElement * sizeof(int));
-    *(connectivity + 0) = 0;
-    *(connectivity + 1) = 2;
-    *(connectivity + 2) = 3;
-    *(connectivity + 3) = 1;
-    double *coordinates = malloc(nnodesElement * dim * sizeof(double));
-    *(coordinates + 0) = 0.00;
-    *(coordinates + 1) = 0.00;
-    *(coordinates + 2) = 1.00;
-    *(coordinates + 3) = 0.00;
-    *(coordinates + 4) = 1.00;
-    *(coordinates + 5) = 1.00;
-    *(coordinates + 6) = 0.00;
-    *(coordinates + 7) = 1.00;
-    initQuadElement(element, 1, gp, nnodesElement, DOF, connectivity, coordinates);
-
     
     // Gets the shape functions for a 2D quad element. Needs only be ran once as long as all the elements are the same.
     quadShapeFunctions(sf); 
-    
-    printf("Km: %d \n", Km);
-    printf("loadIncrementSteps: %d \n", loadIncrementSteps);
+    printf("Shape function results: \n");
+    for (int i = 0; i < gp; i++)
+    {
+        printf("N%d,  \t\t N%dPxi, \t\tN%dPeta, \t\tWeight:%.2f \n", (i+1), (i+1), (i+1), sf[i].weight);
+        for (int j = 0; j < 4; j++)
+        {
+            printf("%.4f \t\t %.4f \t\t%.4f \n", sf[i].Ni[j], sf[i].NiPxi[j], sf[i].NiPeta[j]);
+        }
+        printf("\n");
+    }
+
+    printf("Settings: Load Increments:%d, Max load steps:%d, Residual Threshold:%d, Displacement Increment Threshold:%d \n\n", loadIncrementSteps, maxLoadSteps, residualThreshold, dispIncrThreshold);
 
     // Newton-Raphson Iterator
-    printf("Starting Newton-Raphson iteration. \n");
+    printf("Starting Newton-Raphson iteration. \n\n");
     for (int k = 0; k < loadIncrementSteps; k++)
     {
-        printf("Hi: %d \n", k);
         // The following logic is complex, but it does 4 things.
         // 1: Commit the trial values in the Gauss Point to be true values.
         // 2: Check if all the load is applied AND the last step converged. If all values are past the mark, break out of the loop. 
         // 3, 4: If not, apply load increment AND reset the displacement increment vector, du to 0.
         if (stepConverged)
         {
-            printf("\tHi CONVERGED: %d \n", k);
-            commitTrialValuesAtGaussPoints(element, nelements); // Commit trial values to commited values.
+            commitTrialValuesAtGaussPoints(elements, nelements); // Commit trial values to commited values.
             fullLoadApplied = 1; // Try this, if any of the values are not done, then this will be set back to 0 sometime in the for-loop.
             for (int i = 0; i < Km; i++)
             {
-                printf("\t\tHi: %d \n", i);
                 if ( *(Fstep + i) >= *(Fext + i) )
                 {
                     fullLoadApplied = 0;
@@ -262,7 +259,6 @@ int main (char *args)
                     *(du + i) = 0;
                 }
             }
-            printf("\tHi EXIT: %d \n", fullLoadApplied);
             if (fullLoadApplied)
             {
                 printf("Full loads are applied and solution converged on step %d. Proceeding to post-processing . . . \n\n", stepCounter);
@@ -270,7 +266,6 @@ int main (char *args)
                 break; // Finish the loop.
             }
         }
-        printf("\tHi: %d \n", k);
 
         printf("Running step: %d . . . \n", k);
 
@@ -316,30 +311,46 @@ int main (char *args)
                 {
                     for (int d = 0; d < DOF; d++) // Loop over each DOF
                     {
-                        *(ue + i * DOF + d) = *(u + element[e].nodeids[i] * DOF + d); // Store the displacement from the node with this id.
+                        *(ue + i * DOF + d) = *(u + elements[e].nodeids[i] * DOF + d); // Store the displacement from the node with this id.
+                        printf("Nodeid:%d, u:%.2f \t", elements[e].nodeids[i], *(ue + i * DOF + d));
                     }
                 }
+                printf("\n");
 
                 // Begin looping over the Gauss Points of the elements, each loop is for the i-th Gauss Point.
-                for (int i = 0; i < element->gp; i++)
+                for (int i = 0; i < elements->gp; i++)
                 {
-                    printf("\t\t\tElement #%d . . . Gauss Point #%d", e, i);
+                    printf("\t\t\tElement #%d . . . Gauss Point #%d \n", e, i);
 
                     // Find the Jacobian, B matrix, and elastic D_e matrix for this Gauss Point.
-                    quadJacobian(J, Jinv, Jn, detJ, sf[i].Ni, sf[i].NiPxi, sf[i].NiPeta, element[e].coords, DOF);
+                    quadJacobian(J, Jinv, Jn, detJ, sf[i].Ni, sf[i].NiPxi, sf[i].NiPeta, elements[e].coords, DOF);
                     quadBMatrix(B, Btrans, Jinv, sf[i].NiPxi, sf[i].NiPeta);
                     elasticDMatrixPlaneStrain(D, E, v);
+
+                    
+                    // Print the D matrix
+                    printf("D_e matrix: \n");
+                    for (int h = 0; h < Dn; h++)
+                    {
+                        for (int j = 0; j < Dn; j++)
+                        {
+                            printf("%.4f\t", *(D + h*Dn + j));
+                        }
+                        printf("\n");
+                    }
+                    printf("\n\n");
+
 
                     // Get the strain for this Gauss Point with the displacement and B matrix.
                     displacementStrain(epsilon, B, ue, nnodesElement, DOF);
 
                     // Make trial stress
-                    trialStress(sigmaTrial, D, epsilon, element[e].epsilonP, Dn, i);
+                    trialStress(sigmaTrial, D, epsilon, elements[e].epsilonP, Dn, i);
 
                     // Find deviatoric stress, von Mises equivalent stress, yield stress adjusted for existing plastic strain, and find von Mises Yield Function
                     deviatoricStress2D(sDeviatoric, sigmaTrial);
                     sigmaEq = vonMisesEquivalentStress2D(sDeviatoric);
-                    sigmaYield = plasticCorrectedYieldStress(sigmaYieldInitial, H, element[e].epsilonBarP[i]);
+                    sigmaYield = plasticCorrectedYieldStress(sigmaYieldInitial, H, elements[e].epsilonBarP[i]);
 
                     // Check von Mises Yield Function for yielding of the node. If elastic, use elastic material stiffness matrix. If plastic, run return mapping.
                     f = vonMisesYieldFunction(sigmaEq, sigmaYield);
@@ -364,16 +375,16 @@ int main (char *args)
                         elementInternalForceVector(FintE, Btrans, sigma, *detJ, sf[i].weight, Kem, Dn);
 
                         // Trial plastic strain tensor
-                        trialPlasticStrain(trialEpsilonP, element[e].epsilonP, nUnitDeviatoric, deltaGamma, Dn, i);
+                        trialPlasticStrain(trialEpsilonP, elements[e].epsilonP, nUnitDeviatoric, deltaGamma, Dn, i);
 
                         // Trial plastic equivalent strain
-                        element[e].trialEpsilonBarP[i] = trialEquivalentPlasticStrain(deltaGamma);
+                        elements[e].trialEpsilonBarP[i] = trialEquivalentPlasticStrain(deltaGamma);
 
                         // Store trial values in element, but they are not to be commited before the load step converges.
                         for (int j = 0; j < Dn; j++)
                         {
-                            element[e].sigma[i * element[e].gp + j] = *(sigma + j);
-                            element[e].trialEpsilonP[i * element[e].gp + j] = *(trialEpsilonP + j);
+                            elements[e].sigma[i * elements[e].gp + j] = *(sigma + j);
+                            elements[e].trialEpsilonP[i * elements[e].gp + j] = *(trialEpsilonP + j);
                         }
                     }
                     else
@@ -384,30 +395,65 @@ int main (char *args)
 
                     // Calculate and append the contribution to the element stiffness matrix, Ke, for the current Gauss Point. The element stiffness matrix is summed for each element over all the Gauss Points.
                     elementStiffnessMatrix(Ke, nnodesElement, DOF, B, Btrans, D, *detJ, sf[i].weight);
+
+                    // Print the element stiffness matrix
+                    for(int i = 0; i < Kem; i++)
+                    {
+                        for (int j = 0; j < Kem; j++)
+                        {
+                            printf("%.3f\t", *(Ke + i*Kem + j));
+                        }
+                        printf("\n");
+                    }
+                    printf("\n");
                 }
+
 
                 // Assemble into global stiffness matrix.
                 if (skylineSolver)
                 {
                     // Assemble into skyline matrix
-                    globalSkylineStiffnessMatrix(Kskyline,Ke, element[e].nodeids, DOF, nnodesElement, Kem);
+                    globalSkylineStiffnessMatrix(Kskyline, Ke, elements[e].nodeids, DOF, nnodesElement, Kem);
                     applyFixedDisplacementSkylineStiffnessMatrix(uFixed, Kskyline);
                 }
                 {
                     // Assemble into regular matrix
-                    globalStiffnessMatrix(K, Ke, element[e].nodeids, DOF, nnodesElement, Km, Kem);
+                    globalStiffnessMatrix(K, Ke, elements[e].nodeids, DOF, nnodesElement, Km, Kem);
                     applyFixedDisplacementStiffnessMatrix(uFixed, K, Km);
                 }
                 
                 // Assemble into global internal force vector.
-                globalInternalForceVector(Fint, FintE, element[e].nodeids, DOF, nnodesElement, Km, Kem);
+                globalInternalForceVector(Fint, FintE, elements[e].nodeids, DOF, nnodesElement, Km, Kem);
             }
 
+            // Print the global stiffness matrix
+            //printf("K - Global stiffness matrix");
+            for(int i = 0; i < Km; i++)
+            {
+                for (int j = 0; j < Km; j++)
+                {
+                    //printf("%.3f\t", *(K + i*Km + j));
+                }
+                //printf("\n");
+            }
+            //printf("\n");
+
+            // Print internal force vector
+            printf("F_int - Internal force vector");
+            for (int i = 0; i < Km; i++)
+            {
+                printf("%.4f\t", *(Fint + i));
+            }
+            printf("\n\n");
+
             // Compute the residual, r, as f_ext - f_int
+            printf("r - Residual force vector");
             for (int i = 0; i < Km; i++)
             {
                 *(r + i) = *(Fstep + i) - *(Fint + i);   
+                printf("%.4f", *(r + i));
             }
+            printf("\n\n");
 
             // Set fixed displacements in the residual vector
             applyFixedDisplacementResidualVector(uFixed, r, Km);
@@ -453,6 +499,7 @@ int main (char *args)
 
     printf("\n\nNewton-Raphson iteration has concluded after %d steps! \n\n", stepCounter);
 
+    
 
     // Post-processing
     if (solutionFound)
@@ -467,7 +514,7 @@ int main (char *args)
 
 
     // Freeing some variables from memory now that they are no longer needed.
-    free(element); 
+    free(elements); 
     free(sf); 
     free(J); 
     free(detJ); 

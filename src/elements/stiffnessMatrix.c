@@ -224,15 +224,13 @@ int globalStiffnessMatrix (double *K, double *Ke, int *nodeids, int dof, int nno
         Ki = *(globDOFs + i); // Row indices for K
         for (int j = 0; j < Kem; j++)
         {
-
+            Kj = *(globDOFs + j); // Column indices for K
             // Check that indices are not out of bounds for the global stiffness matrix.
             if (Ki >= Km || Kj >= Km) 
             {
-                fprintf(stderr, "Index out of bounds: Ki=%d, Kj=%d\n", Ki, Kj);
+                fprintf(stderr, "\t\t\t\tIndex out of bounds: Ki=%d, Kj=%d\n", Ki, Kj);
                 return 1;
             }
-
-            Kj = *(globDOFs + j); // Column indices for K
 
             // K[Ki][Kj] += Ke[i][j];
             *(K + Ki * Km + Kj) += *(Ke + i * Kem + j);
