@@ -136,8 +136,6 @@ int main (char *args)
         *(Fstep + i) = 0; // Set the intial values to 0.
     }
 
-    // Determine whether to use normal matrix or skyline matrix.
-
     // Allocate memory for the 'element' and 'node' structs.
     quadElement *element = malloc(nelements * sizeof(quadElement));
 
@@ -214,28 +212,32 @@ int main (char *args)
         This marks the actual start of the steps of the Finite Element code...
     */
     // Initialize -> Material Properties -> Stress and Strain Variables -> Initial Conditions and Read Input Data (Geometry, Boundary Conditions & Loading)
-    
+    initQuadElement(element, 1, gp, nnodesElement, DOF, nod)
 
     
     // Gets the shape functions for a 2D quad element. Needs only be ran once as long as all the elements are the same.
     quadShapeFunctions(sf); 
     
-
+    printf("Km: %d \n", Km);
+    printf("loadIncrementSteps: %d \n", loadIncrementSteps);
 
     // Newton-Raphson Iterator
-    printf("Starting Newton-Raphson iteration.");
+    printf("Starting Newton-Raphson iteration. \n");
     for (int k = 0; k < loadIncrementSteps; k++)
     {
+        printf("Hi: %d \n", k);
         // The following logic is complex, but it does 4 things.
         // 1: Commit the trial values in the Gauss Point to be true values.
         // 2: Check if all the load is applied AND the last step converged. If all values are past the mark, break out of the loop. 
         // 3, 4: If not, apply load increment AND reset the displacement increment vector, du to 0.
         if (stepConverged)
         {
+            printf("\tHi CONVERGED: %d \n", k);
             commitTrialValuesAtGaussPoints(element, nelements); // Commit trial values to commited values.
             fullLoadApplied = 1; // Try this, if any of the values are not done, then this will be set back to 0 sometime in the for-loop.
             for (int i = 0; i < Km; i++)
             {
+                printf("\t\tHi: %d \n", i);
                 if ( *(Fstep + i) >= *(Fext + i) )
                 {
                     fullLoadApplied = 0;
@@ -246,6 +248,7 @@ int main (char *args)
                     *(du + i) = 0;
                 }
             }
+            printf("\tHi EXIT: %d \n", fullLoadApplied);
             if (fullLoadApplied)
             {
                 printf("Full loads are applied and solution converged on step %d. Proceeding to post-processing . . . \n\n", stepCounter);
@@ -253,6 +256,7 @@ int main (char *args)
                 break; // Finish the loop.
             }
         }
+        printf("\tHi: %d \n", k);
 
         printf("Running step: %d . . . \n", k);
 
@@ -373,7 +377,7 @@ int main (char *args)
                 {
                     // Assemble into skyline matrix
                     globalSkylineStiffnessMatrix(Kskyline,Ke, element[e].nodeids, DOF, nnodesElement, Kem);
-                    applyFixedDisplacementSkylineStiffnessMatrix(uFixed, Ke);
+                    applyFixedDisplacementSkylineStiffnessMatrix(uFixed, Kskyline);
                 }
                 {
                     // Assemble into regular matrix
@@ -439,7 +443,7 @@ int main (char *args)
     // Post-processing
     if (solutionFound)
     {
-        postProcessingElastoPlastic (u, element, sf, Km);
+        //postProcessingElastoPlastic (u, element, sf, Km);
     }
     else
     {

@@ -1,5 +1,6 @@
-#include "matrixArithmetic.h"
+#include <stdlib.h>
 
+#include "matrixArithmetic.h"
 #include "forceVector.h"
 
 void initElementInternalForceVector (double *FintE, int Kem)

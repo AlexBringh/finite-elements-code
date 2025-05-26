@@ -1,5 +1,7 @@
 #include <math.h>
 
+#include <stdlib.h>
+
 #include "vonMisesYield.h"
 #include "matrixArithmetic.h"
 

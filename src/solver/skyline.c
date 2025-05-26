@@ -185,7 +185,3 @@ int resetSkylineMatrix (skylineMatrix *matrix)
     
 }
 
-void applyFixedDisplacementStiffnessMatrix (int *uFixed, skylineMatrix *K)
-{
-
-}
