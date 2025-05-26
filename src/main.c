@@ -212,7 +212,21 @@ int main (char *args)
         This marks the actual start of the steps of the Finite Element code...
     */
     // Initialize -> Material Properties -> Stress and Strain Variables -> Initial Conditions and Read Input Data (Geometry, Boundary Conditions & Loading)
-    initQuadElement(element, 1, gp, nnodesElement, DOF, nod)
+    int *connectivity = malloc(nnodesElement * sizeof(int));
+    *(connectivity + 0) = 0;
+    *(connectivity + 1) = 2;
+    *(connectivity + 2) = 3;
+    *(connectivity + 3) = 1;
+    double *coordinates = malloc(nnodesElement * dim * sizeof(double));
+    *(coordinates + 0) = 0.00;
+    *(coordinates + 1) = 0.00;
+    *(coordinates + 2) = 1.00;
+    *(coordinates + 3) = 0.00;
+    *(coordinates + 4) = 1.00;
+    *(coordinates + 5) = 1.00;
+    *(coordinates + 6) = 0.00;
+    *(coordinates + 7) = 1.00;
+    initQuadElement(element, 1, gp, nnodesElement, DOF, connectivity, coordinates);
 
     
     // Gets the shape functions for a 2D quad element. Needs only be ran once as long as all the elements are the same.
