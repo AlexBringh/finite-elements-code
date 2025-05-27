@@ -1,5 +1,5 @@
 #include <math.h>
-
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "vonMisesYield.h"
@@ -25,6 +25,7 @@ int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilo
     // Extract the plsatic strain tensors for the current Gauss Point
     for (int i = 0; i < Dn; i++)
     {
+        *(epsilonCorrected + i) = 0.0;
         *(epsilonPGP + i) = *(epsilonP + gpCurrent * Dn + i);
     }
 
@@ -63,7 +64,7 @@ int unitDeviatoricStress (double *nDeviatoric, double *sDeviatoric, int sn)
         double *sDeviatoric -> Pointer to s-deviatoric stress. (Must be (sn)x1 vector)
     */
 
-    double sAbs = 0;
+    double sAbs = 0.0;
 
     for (int i = 0; i < sn; i++)
     {
@@ -88,7 +89,7 @@ double vonMisesEquivalentStress2D (double *sDeviatoric)
         Output:
         double sigmaEq -> calculated von Mises equivalent stress.
     */
-    return sqrt( 2 / 3 * ( pow(*(sDeviatoric + 0), 2) + pow(*(sDeviatoric + 1), 2) + 2 * pow(*(sDeviatoric + 2), 2) ) );
+    return sqrt( 2.0 / 3.0 * ( pow(*(sDeviatoric + 0), 2.0) + pow(*(sDeviatoric + 1), 2.0) + 2.0 * pow(*(sDeviatoric + 2), 2.0) ) );
 }
 
 double plasticCorrectedYieldStress (double sigmaYieldInitial, double H, double epsilonBarP)

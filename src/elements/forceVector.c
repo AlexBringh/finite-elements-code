@@ -108,5 +108,21 @@ void globalInternalForceVector (double *Fint, double *FintE, int *nodeids, int d
 
 void applyFixedDisplacementResidualVector (int *uFixed, double *r, int Km)
 {
+    /*
+        Loops through every displacement and sees if it is fixed. 
+        If yes, then the corresponding row in the residual force vector is set to 0.
 
+        Inputs:
+        int *uFixed -> Pointer to fixed dispalcement vector (integer (boolean) values).
+        double *r   -> Pointer to residual force vector. Results are stored here.
+        int Km      -> Size, m, of rows in residual force vector and in fixed displacement vector.
+    */
+
+    for (int i = 0; i < Km; i++)
+    {
+        if (*(uFixed + i)) // Checks the current slot, uFixed[i], if it is 1, there is a fixed displacement here. If it is 0, there is not.
+        {
+            *(r + i) = 0.0; // Sets the residual force at this point to be 0.
+        }
+    }
 }

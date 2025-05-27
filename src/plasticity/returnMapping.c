@@ -1,4 +1,6 @@
 #include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "returnMapping.h"
 
@@ -73,7 +75,7 @@ double shearModulus (double E, double v)
         double G -> Shear Modulus
     */
 
-    return E / (2 * (1+v));
+    return E / (2.0 * (1.0+v));
 }
 
 
@@ -91,7 +93,7 @@ double plasticMultiplier (double f, double G, double H)
         double deltaGamma -> Calculated Plastic Multiplier
     */
 
-    return f / (3 * G + H);
+    return f / (3.0 * G + H);
 }
 
 void plasticStressCorrection (double *sigma, double *sigmaTrial, double *n, double G, double deltaGamma, int index)  
@@ -109,7 +111,7 @@ void plasticStressCorrection (double *sigma, double *sigmaTrial, double *n, doub
     */
     for (int i = 0; i < index; i++)
     {
-        *(sigma + i) = *(sigmaTrial + i) - 2 * G * deltaGamma * *(n + i);
+        *(sigma + i) = *(sigmaTrial + i) - 2.0 * G * deltaGamma * *(n + i);
     }
 }
 
@@ -136,5 +138,5 @@ void trialPlasticStrain (double* trialEpsilonP, double *epsilonP, double *n, dou
 
 double trialEquivalentPlasticStrain (double deltaGamma)
 {
-    return sqrt(2 / 3) * deltaGamma;
+    return sqrt(2.0 / 3.0) * deltaGamma;
 }

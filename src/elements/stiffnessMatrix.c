@@ -242,7 +242,28 @@ int globalStiffnessMatrix (double *K, double *Ke, int *nodeids, int dof, int nno
 
 void applyFixedDisplacementStiffnessMatrix (int *uFixed, double *K, int Km)
 {
+    /*
+        Loops through every displacement and sees if it is fixed. 
+        If yes, then the corresponding row in the global stiffness matrix is set to 1 on the diagonal, and 0 for the rest.
 
+        Inputs:
+        int *uFixed -> Pointer to fixed dispalcement vector (integer (boolean) values).
+        double *K   -> Pointer to global stiffness matrix. Results are stored here.
+        int Km      -> Size, m, of rows, columns in global stiffness matrix and of rows fixed displacement vector.
+    */
+
+    for (int i = 0; i < Km; i++)
+    {
+        if (*(uFixed + i)) // Checks the current slot, uFixed[i], if it is 1, there is a fixed displacement here. If it is 0, there is not.
+        {
+            for (int j = 0; j < Km; j++) // Loop through every column of the global stiffness matrix
+            {
+                *(K + i * Km + j) = 0.0; // Sets the whole row to 0
+                *(K + j * Km + i) = 0.0; // Sets the column above and below the diagonal to 0. This is crucial for LU decomp, but potentially damaging to Gauss Elim.
+            }
+            *(K + i * Km + i) = 1.0; // Sets the diagonal to 1
+        }
+    }
 }
 
 int globalSkylineStiffnessMatrix (skylineMatrix *K, double *Ke, int *nodeids, int dof, int nnodesElement, int Kem)
