@@ -19,6 +19,25 @@ void printMatrix (double *A, int m, int n)
     printf("\n");
 }
 
+void printPreciseMatrix (double *A, int m, int n)
+{
+    /*
+        Prints the matrix of m x n (row x column) dimension.
+    */
+    printf("Matrix (%dx%d) \n", m, n);
+
+    for (int i = 0; i < m; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            double a = *(A + n*i + j);
+            printf("%.15f\t", a);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
 
 int augmentedMatrix (double *Ab, double *A, double *B, int m)
 {

@@ -13,6 +13,7 @@
 #include "forceVector.h"
 #include "inputData.h"
 #include "jacobian.h"
+#include "matrixUtils.h"
 #include "postProcessing.h"
 #include "returnMapping.h"
 #include "stiffnessMatrix.h"
@@ -165,8 +166,6 @@ int main (char *args)
     double *du = calloc(Km,  sizeof(double));
     double *ue = calloc(Kem, sizeof(double));
 
-    for (int i = 0; i < Km; i++) *(u + i) = 1.0 * i;
-
     // Get the shape functions for 2D Quad elements
     shapeFunctions2D *sf = malloc(gp * sizeof(shapeFunctions2D));
 
@@ -311,10 +310,9 @@ int main (char *args)
                     for (int d = 0; d < DOF; d++) // Loop over each DOF
                     {
                         *(ue + i * DOF + d) = *(u + elements[e].nodeids[i] * DOF + d); // Store the displacement from the node with this id.
-                        printf("%.8f\t", *(u + elements[e].nodeids[i] * DOF + d));
                     }
                 }
-                printf("\n");
+                printPreciseMatrix(ue, 1, Kem);
 
                 // Begin looping over the Gauss Points of the elements, each loop is for the i-th Gauss Point.
                 for (int i = 0; i < elements->gp; i++)
@@ -331,7 +329,7 @@ int main (char *args)
                     printf("\t\t\t\tStrain: ");
                     for (int i = 0; i < Dn; i++)
                     {
-                        printf("%.8f\t", *(epsilon + i));
+                        printf("%.7f\t", *(epsilon + i));
                     }
                     printf("\n");
 
@@ -340,7 +338,7 @@ int main (char *args)
                     printf("\t\t\t\tTrial stress: ");
                     for (int i = 0; i < Dn; i++)
                     {
-                        printf("%.4f\t", *(sigmaTrial + i));
+                        printf("%.2f\t", *(sigmaTrial + i));
                     }
                     printf("\n");
 
@@ -385,6 +383,7 @@ int main (char *args)
                             elements[e].trialEpsilonP[i * elements[e].gp + j] = *(trialEpsilonP + j);
                         }
                         
+                        
                         printf("\n\t\t\t\ttrialSigma: ");
                         for (int j = 0; j < Dn; j++) printf("%.4f\t", elements[e].trialSigma[i * elements[e].gp + j]);
                         printf("\n\t\t\t\tcommitedSigma: ");
@@ -395,6 +394,7 @@ int main (char *args)
                         for (int j = 0; j < Dn; j++) printf("%.4f\t", elements[e].epsilonP[i * elements[e].gp + j]);
                         printf("\n\t\t\t\ttrialEpsilonBarP: %.4f", elements[e].trialEpsilonBarP[i]);
                         printf("\n\t\t\t\tcommittedEpsilonBarP: %.4f\n", elements[e].epsilonBarP[i]);
+                        
                     }
                     else
                     {
@@ -405,19 +405,7 @@ int main (char *args)
 
                     // Calculate and append the contribution to the element stiffness matrix, Ke, for the current Gauss Point. The element stiffness matrix is summed for each element over all the Gauss Points.
                     elementStiffnessMatrix(Ke, nnodesElement, DOF, B, Btrans, D, *detJ, sf[i].weight);
-
-                    // Print the element stiffness matrix
-                    /*for(int i = 0; i < Kem; i++)
-                    {
-                        for (int j = 0; j < Kem; j++)
-                        {
-                            printf("%.3f\t", *(Ke + i*Kem + j));
-                        }
-                        printf("\n");
-                    }
-                    printf("\n");*/
                 }
-
 
                 // Assemble into global stiffness matrix.
                 if (skylineSolver)
@@ -440,7 +428,8 @@ int main (char *args)
             printf("F_int - Internal force vector\n");
             for (int i = 0; i < Km; i++)
             {
-                printf("%.4f\t\t", *(Fint + i));
+                if (*(Fint + i) < 0) printf("%.4f\t", *(Fint + i));
+                else printf("+%.4f\t", *(Fint + i));
             }
             printf("\n\n");
 
@@ -449,7 +438,8 @@ int main (char *args)
             for (int i = 0; i < Km; i++)
             {
                 *(r + i) = *(Fstep + i) - *(Fint + i);   
-                printf("%.4f\t\t", *(Fstep + i));
+                if (*(Fstep + i) < 0) printf("%.4f\t", *(Fstep + i));
+                else printf("+%.4f\t", *(Fstep + i));
             }
             printf("\n\n");
 

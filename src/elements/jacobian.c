@@ -49,6 +49,9 @@ int quadJacobian (double *J, double *Jinv, int m, double *detJ, double *Ni, doub
     *(Jinv + 1) = -1.0 / *(detJ) * *(J + 1);
     *(Jinv + 2) = -1.0 / *(detJ) * *(J + 2);
     *(Jinv + 3) =  1.0 / *(detJ) * *(J + 0); 
+
+    free(xi);
+    free(yi);
     
     return 0;
 }

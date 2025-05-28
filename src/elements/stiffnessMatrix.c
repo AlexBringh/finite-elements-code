@@ -45,7 +45,7 @@ int quadBMatrix (double *B, double *Btrans, double *Jinv, double *NiPxi, double 
         *(B + 16 + i * 2) = NiPy; // Third row, first value of the B-matrix.
         *(B + 17 + i * 2) = NiPx; // Third row, second value of the B-matrix.
 
-        *(Btrans + i * 3 * 2) = NiPx; // First column of the B-transpose.
+        *(Btrans + i * 3 * 2 + 0) = NiPx; // First column of the B-transpose.
         *(Btrans + i * 3 * 2 + 4) = NiPy; // Second column of the B-transpose.
         *(Btrans + i * 3 * 2 + 2) = NiPy; // Third column, first value of the B-transpose.
         *(Btrans + i * 3 * 2 + 5) = NiPx; // Third column, second value of the B-transpose.

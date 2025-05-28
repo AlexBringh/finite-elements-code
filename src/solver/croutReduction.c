@@ -71,11 +71,13 @@ int croutReduction (double *A, int m, double *x, double *B)
     }
 
     // Print out the input A-matrix and B-vector
+    /*
     printDashedLines(d);
     printf("Crout redcution: \n\nInputed stiffness matrix: \n");
     printMatrix(A, m, n);
     printf("Inputed residual vector: \n");
     printMatrix(B, 1, m);
+    */
 
     // Step 1: Decompose the A-matrix into L- and U-matrices (lower- and upper triangular matrices).
     luDecomposition(A, m, L, U, P);
@@ -89,9 +91,11 @@ int croutReduction (double *A, int m, double *x, double *B)
     // Step 4: Perform backward substitution to obtain the x-vector values (the result of the system).
     backwardSubstitution(x, y, U, m);
 
+    /*
     printf("Result of the system: \n");
-    printMatrix(x, 1, m);
+    printPreciseMatrix(x, 1, m);
     printDashedLines(d);
+    */
 
     free(L);
     free(U);
@@ -196,11 +200,13 @@ int luDecomposition (double *A, int m, double *L, double *U, double *P)
     }
 
     // Print the L- and U- matrices, primarily for debugging purposes.
+    /*
     printf("L-matrix: \n");
     printMatrix(L, m, n);
     printf("U-matrix: \n");
     printMatrix(U, m, n);
     printf("\n");
+    */
 
     return 0;
 }

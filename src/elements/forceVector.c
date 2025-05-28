@@ -36,7 +36,7 @@ void elementInternalForceVector (double *FintE, double *Btrans, double *sigma, d
     */
 
     // Make temporary variable to store the matrix multiplication, Btrans x sigma
-    double *Ftemp = malloc(Kem * 1 * sizeof(double));
+    double *Ftemp = calloc(Kem, sizeof(double));
 
     // Matrix multiply Btrans with sigma
     matrixMultiply(Btrans, sigma, Ftemp, Kem, Bn, 1);
@@ -46,6 +46,7 @@ void elementInternalForceVector (double *FintE, double *Btrans, double *sigma, d
     {
         *(FintE + i) += *(Ftemp + i) * detJ * weight;
     }
+    free(Ftemp);
 }
 
 
