@@ -58,3 +58,12 @@ install(EXPORT FEMlibraryTargets
     NAMESPACE FEMlibrary::
     DESTINATION lib/cmake/FEMlibrary
 )
+
+set(SOURCE_SAMPLE_DIR "${CMAKE_SOURCE_DIR}/sample")
+set(BUILD_SAMPLE_DIR "${CMAKE_BINARY_DIR}/sample")
+
+add_custom_target(copy_sample_dir ALL
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${BUILD_SAMPLE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_SAMPLE_DIR} ${BUILD_SAMPLE_DIR}
+    COMMENT "Refreshing sample directory inside the build folder"
+)

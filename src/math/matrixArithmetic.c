@@ -65,6 +65,12 @@ int matrixMultiply (double *A, double *B, double *C, int m, int n, int h)
         int h -> size h
     */
 
+    // Zero out C
+    for (int i = 0; i < m * h; i++)
+    {
+        *(C + i) = 0;
+    }
+
     for (int i = 0; i < m; i++)
     {
         for (int j = 0; j < h; j++)

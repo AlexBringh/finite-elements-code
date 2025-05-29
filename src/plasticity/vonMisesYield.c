@@ -69,10 +69,10 @@ int unitDeviatoricStress (double *nDeviatoric, double *sDeviatoric, int sn)
 
     double sAbs = 0.0;
 
-    for (int i = 0; i < sn; i++)
-    {
-        sAbs += pow(*(sDeviatoric + i), 2);
-    }
+    sAbs += pow(*(sDeviatoric + 0), 2);
+    sAbs += pow(*(sDeviatoric + 1), 2);
+    sAbs += 2.0 * pow(*(sDeviatoric + 2), 2);
+    sAbs *= 3.0 / 2.0;
     sAbs = sqrt(sAbs);
 
     for (int i = 0; i < sn; i++)

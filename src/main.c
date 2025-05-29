@@ -6,6 +6,7 @@
 
 // Standard Module includes
 #include <stdio.h>
+#include <math.h>
 
 // FEM module includes
 #include "croutReduction.h"
@@ -113,12 +114,12 @@ int main (char *args)
     double *Fext = NULL;
 
     // Load data
-    if (readCSV("data.csv", &nodes, &nnodes, &nnodesElement, &nelements, &gp, &materials, &nmaterials, &uFixed, &Fext)) {
+    if (readCSV("sample/data.csv", &nodes, &nnodes, &nnodesElement, &nelements, &gp, &materials, &nmaterials, &uFixed, &Fext)) {
         return 1;
     }
     DOF = nodes[0].dof;
     dim = nodes[0].dim;
-    readElements("data.csv", &elements, &nelements, nodes, nnodes, gp, nnodesElement, DOF);
+    readElements("sample/data.csv", &elements, &nelements, nodes, nnodes, gp, nnodesElement, DOF);
     E = materials[0].E;
     v = materials[0].v;
     H = materials[0].H;
@@ -243,12 +244,9 @@ int main (char *args)
             fullLoadApplied = 1; // Try this, if any of the values are not done, then this will be set back to 0 sometime in the for-loop.
             for (int i = 0; i < Km; i++)
             {
-                if ( *(Fstep + i) >= *(Fext + i) )
+                if ( *(Fstep + i) < *(Fext + i) )
                 {
                     fullLoadApplied = 0;
-                }
-                else
-                {
                     *(Fstep + i) += *(Fext + i) / loadIncrementSteps;
                     *(du + i) = 0;
                 }
@@ -353,10 +351,15 @@ int main (char *args)
 
                     // Find deviatoric stress, von Mises equivalent stress, yield stress adjusted for existing plastic strain, and find von Mises Yield Function
                     deviatoricStress2D(sDeviatoric, sigmaTrial);
-
                     sigmaEq = vonMisesEquivalentStress2D(sDeviatoric);
-
                     sigmaYield = plasticCorrectedYieldStress(sigmaYieldInitial, H, elements[e].epsilonBarP[i]);
+
+                    // Check to see if sigmaEq or sigmaYield are inf or are nan. If so, print error and exit the program.
+                    if (isinf(sigmaEq) || isnan(sigmaEq) || isinf(sigmaYield) || isnan(sigmaEq))
+                    {
+                        fprintf(stderr, "Error: sigmaEq and/or sigmaYield are invalid. (inf/NaN). \n ");
+                        exit(1);
+                    }
 
                     // Check von Mises Yield Function for yielding of the node. If elastic, use elastic material stiffness matrix. If plastic, run return mapping.
                     f = vonMisesYieldFunction(sigmaEq, sigmaYield);
@@ -385,7 +388,7 @@ int main (char *args)
                         trialPlasticStrain(trialEpsilonP, elements[e].epsilonP, nUnitDeviatoric, deltaGamma, Dn, i);
 
                         // Trial plastic equivalent strain
-                        elements[e].trialEpsilonBarP[i] = trialEquivalentPlasticStrain(deltaGamma);
+                        elements[e].trialEpsilonBarP[i] =  trialEquivalentPlasticStrain(deltaGamma);
 
                         // Store trial values in element, but they are not to be commited before the load step converges.
                         for (int j = 0; j < Dn; j++)
@@ -396,15 +399,15 @@ int main (char *args)
                         
                         
                         printf("\n\t\t\t\ttrialSigma: ");
-                        for (int j = 0; j < Dn; j++) printf("%.2f\t", elements[e].trialSigma[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].trialSigma[i * elements[e].gp + j]);
                         printf("\n\t\t\t\tcommitedSigma: ");
-                        for (int j = 0; j < Dn; j++) printf("%.12f\t", elements[e].sigma[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].sigma[i * elements[e].gp + j]);
                         printf("\n\t\t\t\ttrialEpsilonP: ");
-                        for (int j = 0; j < Dn; j++) printf("%.12f\t", elements[e].trialEpsilonP[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].trialEpsilonP[i * elements[e].gp + j]);
                         printf("\n\t\t\t\tcommitedEpsilonP: ");
-                        for (int j = 0; j < Dn; j++) printf("%.12f\t", elements[e].epsilonP[i * elements[e].gp + j]);
-                        printf("\n\t\t\t\ttrialEpsilonBarP: %.12f", elements[e].trialEpsilonBarP[i]);
-                        printf("\n\t\t\t\tcommittedEpsilonBarP: %.12f\n", elements[e].epsilonBarP[i]);
+                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].epsilonP[i * elements[e].gp + j]);
+                        printf("\n\t\t\t\ttrialEpsilonBarP: %.6f", elements[e].trialEpsilonBarP[i]);
+                        printf("\n\t\t\t\tcommittedEpsilonBarP: %.6f\n", elements[e].epsilonBarP[i]);
                     }
                     else
                     {

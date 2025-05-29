@@ -46,3 +46,8 @@ target_include_directories(femlibrary PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+# Path to the sample folder and output location
+set(SAMPLE_DIR "${CMAKE_SOURCE_DIR}/sample")
+set(OUTPUT_SAMPLE_DIR "${CMAKE_BINARY_DIR}/sample")
+
+
