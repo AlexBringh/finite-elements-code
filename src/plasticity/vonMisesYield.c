@@ -22,6 +22,9 @@ int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilo
     double *epsilonCorrected = malloc(Dn * sizeof(double));
     double *epsilonPGP = malloc(Dn * sizeof(double));
 
+    // Reset trial stress
+    for (int i = 0; i < Dn * Dn; i++) *(sigmaTrial + i) = 0;
+
     // Extract the plsatic strain tensors for the current Gauss Point
     for (int i = 0; i < Dn; i++)
     {
@@ -31,13 +34,6 @@ int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilo
 
     // Calculate epsilon - epsilon_p
     matrixSubtract(epsilon, epsilonPGP, epsilonCorrected, Dn, 1);
-
-    printf("epsilon - epsilon_p: ");
-    for (int i = 0; i < Dn; i++)
-    {
-        printf("%.12f   ", *(epsilonCorrected + i));
-    }
-    printf("\n");
 
     // Calculate De * (epsilon - epsilon_p)
     matrixMultiply(De, epsilonCorrected, sigmaTrial, Dn, Dn, 1);
@@ -96,7 +92,7 @@ double vonMisesEquivalentStress2D (double *sDeviatoric)
         Output:
         double sigmaEq -> calculated von Mises equivalent stress.
     */
-    return sqrt( 2.0 / 3.0 * ( pow(*(sDeviatoric + 0), 2.0) + pow(*(sDeviatoric + 1), 2.0) + 2.0 * pow(*(sDeviatoric + 2), 2.0) ) );
+    return sqrt( 3.0 / 2.0 * ( pow(*(sDeviatoric + 0), 2.0) + pow(*(sDeviatoric + 1), 2.0) + 2.0 * pow(*(sDeviatoric + 2), 2.0) ) );
 }
 
 double plasticCorrectedYieldStress (double sigmaYieldInitial, double H, double epsilonBarP)
