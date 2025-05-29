@@ -191,7 +191,7 @@ int main (char *args)
 
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
-    int loadIncrementSteps = 50; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%
+    int loadIncrementSteps = 100; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%
     int maxLoadSteps = 25; // Maximum allowed steps for each load step.
     int stepConverged = 1; // Check for seeing if convergence has been reached. Set it initially to 1, so that the first load increment will not be 0.
     int fullLoadApplied = 0; // Check for seeing if the entire load is applied. Set initially to 0, and set to 1 only if all the Fload[i] >= Fext[i].
@@ -233,7 +233,7 @@ int main (char *args)
 
     // Newton-Raphson Iterator
     printf("Starting Newton-Raphson iteration. \n\n");
-    for (int k = 0; k < loadIncrementSteps; k++)
+    for (int k = 0; k < loadIncrementSteps + 1; k++)
     {
         // The following logic is complex, but it does 3 things.
         // 1: Check if all the load is applied AND the last step converged. If all values are past the mark, break out of the loop. 
@@ -263,19 +263,6 @@ int main (char *args)
 
         printf("Running step: %d . . . \n", k);
 
-        // Init / reset global stiffness matrix and global internal force vetor for the current step
-        if (skylineSolver)
-        {
-            // Init / reset skyline matrix
-            resetSkylineMatrix(Kskyline);
-        }
-        else
-        {
-            // Init / reset regular matrix
-            initGlobalStiffnessMatrix(K, Km);
-        }
-        initGlobalInternalForceVector(Fint, Km);
-
         // Set convergence check to 0 (false) before the load steps start.
         stepConverged = 0;
 
@@ -284,6 +271,19 @@ int main (char *args)
         {
             printf("\n\tStep: %d, Load Step: %d . . . Running . . . \n\n", k, l);
             stepCounter += 1;
+
+            // Init / reset global stiffness matrix and global internal force vetor for the current load step
+            if (skylineSolver)
+            {
+                // Init / reset skyline matrix
+                resetSkylineMatrix(Kskyline);
+            }
+            else
+            {
+                // Init / reset regular matrix
+                initGlobalStiffnessMatrix(K, Km);
+            }
+            initGlobalInternalForceVector(Fint, Km);
 
             // Init / Reset increment displacement vector.
             for (int i = 0; i < Km; i++)
