@@ -32,6 +32,13 @@ int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilo
     // Calculate epsilon - epsilon_p
     matrixSubtract(epsilon, epsilonPGP, epsilonCorrected, Dn, 1);
 
+    printf("epsilon - epsilon_p: ");
+    for (int i = 0; i < Dn; i++)
+    {
+        printf("%.12f   ", *(epsilonCorrected + i));
+    }
+    printf("\n");
+
     // Calculate De * (epsilon - epsilon_p)
     matrixMultiply(De, epsilonCorrected, sigmaTrial, Dn, Dn, 1);
 
