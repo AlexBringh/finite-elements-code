@@ -9,9 +9,9 @@
 #include "printUtils.h"
 
 // Function prototypes that are limited access to only this file.
-void partialPivot (double *A, int m, double *P, int k);
-int luDecomposition (double *A, int m, double *L, double *U, double *P);
-int permutateVectorB (double *B, double *P, int m);
+void partialPivot (double *A, int m, int *P, int k);
+int luDecomposition (double *A, int m, double *L, double *U, int *P);
+int permutateVectorB (double *B, int *P, int m);
 int forwardSubstitution (double *B, int m, double *L, double *y);
 int backwardSubstitution (double *x, double *y, double *U, int m);
 
@@ -57,7 +57,7 @@ int croutReduction (double *A, int m, double *x, double *B)
     }
 
     // Allocate memory slots for the permutation (P) vector.
-    double *P = malloc(m * sizeof(double));
+    int *P = malloc(m * sizeof(int));
     if (P == NULL)
     {
         fprintf(stderr, "Error (croutReduction): Memory allocation for array P failed! \n");
@@ -110,7 +110,7 @@ int croutReduction (double *A, int m, double *x, double *B)
     return 0;
 }
 
-void partialPivot (double *A, int m, double *P, int k)
+void partialPivot (double *A, int m, int *P, int k)
 {
     /*
         Partial pivots the A-matrix and correspondingly the B-vector so that the largest values for the i-th column will go down diagonally. 
@@ -119,6 +119,16 @@ void partialPivot (double *A, int m, double *P, int k)
 
         This process does, unfortuantely add complexity and therefore computation time, however it is absolutely necessary to limit the amount of computational error or algorithm breakdowns caused by potential small values being placed on the diagonal of the L-matrix later.
     */
+
+    // Check that the values in P are within bounds.
+    for (int i = 0; i < m; i++)
+    {
+        if (*(P + i) > (m - 1) || *(P + i) < 0)
+        {
+            fprintf(stderr, "Error: P[%d] = %d out of bounds [0. %d]: ", i, *(P + i), (m - 1));
+            exit(1);
+        }
+    }
 
     int n = m;
 
@@ -144,7 +154,7 @@ void partialPivot (double *A, int m, double *P, int k)
     }
 }
 
-int luDecomposition (double *A, int m, double *L, double *U, double *P)
+int luDecomposition (double *A, int m, double *L, double *U, int *P)
 {
     // TODO documentation
     int n = m; // n represents columns.
@@ -211,7 +221,7 @@ int luDecomposition (double *A, int m, double *L, double *U, double *P)
     return 0;
 }
 
-int permutateVectorB (double *B, double *P, int m)
+int permutateVectorB (double *B, int *P, int m)
 {
     // TODO documentation
     // Reserve memory for a temporary array for storing sorted B-values.

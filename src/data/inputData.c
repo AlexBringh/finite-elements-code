@@ -217,7 +217,7 @@ int readElements(const char *filename, quadElement **elements_out, int *nelement
             e.nodeids[3] = n3;
 
             // Allocate and fill coords (flattened)
-            e.coords = malloc(nnodes_per_elem * 2 * sizeof(double));
+            e.coords = malloc(nnodes_per_elem * dof * sizeof(double));
             if (!e.coords) {
                 perror("malloc failed for coords");
                 return -1;
@@ -240,15 +240,15 @@ int readElements(const char *filename, quadElement **elements_out, int *nelement
                 }
             }
 
-            int ngp = gp;
+            int stressStrainSize = gp * 3;
 
             // Allocate internal stress/strain arrays
-            e.sigma             = calloc(ngp, sizeof(double));
-            e.epsilonP          = calloc(ngp, sizeof(double));
-            e.epsilonBarP       = calloc(ngp, sizeof(double));
-            e.trialSigma        = calloc(ngp, sizeof(double));
-            e.trialEpsilonP     = calloc(ngp, sizeof(double));
-            e.trialEpsilonBarP  = calloc(ngp, sizeof(double));
+            e.sigma             = calloc(stressStrainSize, sizeof(double));
+            e.epsilonP          = calloc(stressStrainSize, sizeof(double));
+            e.epsilonBarP       = calloc(stressStrainSize, sizeof(double));
+            e.trialSigma        = calloc(stressStrainSize, sizeof(double));
+            e.trialEpsilonP     = calloc(stressStrainSize, sizeof(double));
+            e.trialEpsilonBarP  = calloc(gp, sizeof(double));
 
             elements[element_count++] = e;
         }

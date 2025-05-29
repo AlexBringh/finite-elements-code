@@ -203,7 +203,7 @@ int globalStiffnessMatrix (double *K, double *Ke, int *nodeids, int dof, int nno
     */
 
     // Allocate memory for array to hold global degrees of freedom indices.
-    int *globDOFs = malloc (nnodesElement * dof * sizeof(int));
+    int *globDOFs = malloc (Kem * sizeof(int));
 
     // Calculate and store global degrees of freedom indices from each of the nodes ids stored in the 'nodeids' array.
     for (int i = 0; i < nnodesElement; i++)
@@ -226,9 +226,10 @@ int globalStiffnessMatrix (double *K, double *Ke, int *nodeids, int dof, int nno
         {
             Kj = *(globDOFs + j); // Column indices for K
             // Check that indices are not out of bounds for the global stiffness matrix.
-            if (Ki >= Km || Kj >= Km) 
+            if (Ki > Km || Kj > Km || Ki < 0 || Kj < 0) 
             {
                 fprintf(stderr, "\t\t\t\tIndex out of bounds: Ki=%d, Kj=%d\n", Ki, Kj);
+                free(globDOFs);
                 return 1;
             }
 

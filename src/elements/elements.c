@@ -1,5 +1,6 @@
 #include "elements.h"
 #include "matrixArithmetic.h"
+#include <stdio.h>
 
 void commitTrialValuesAtGaussPoints (quadElement *element, int nelements)
 {

@@ -116,10 +116,9 @@ int main (char *args)
     if (readCSV("data.csv", &nodes, &nnodes, &nnodesElement, &nelements, &gp, &materials, &nmaterials, &uFixed, &Fext)) {
         return 1;
     }
-    readElements("data.csv", &elements, &nelements, nodes, nnodes, gp, nnodesElement, DOF);
-
     DOF = nodes[0].dof;
     dim = nodes[0].dim;
+    readElements("data.csv", &elements, &nelements, nodes, nnodes, gp, nnodesElement, DOF);
     E = materials[0].E;
     v = materials[0].v;
     H = materials[0].H;
@@ -192,7 +191,7 @@ int main (char *args)
 
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
-    int loadIncrementSteps = 100; // Number of load increment steps. Percent applied load at each step.
+    int loadIncrementSteps = 50; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%
     int maxLoadSteps = 25; // Maximum allowed steps for each load step.
     int stepConverged = 1; // Check for seeing if convergence has been reached. Set it initially to 1, so that the first load increment will not be 0.
     int fullLoadApplied = 0; // Check for seeing if the entire load is applied. Set initially to 0, and set to 1 only if all the Fload[i] >= Fext[i].
@@ -236,13 +235,11 @@ int main (char *args)
     printf("Starting Newton-Raphson iteration. \n\n");
     for (int k = 0; k < loadIncrementSteps; k++)
     {
-        // The following logic is complex, but it does 4 things.
-        // 1: Commit the trial values in the Gauss Point to be true values.
-        // 2: Check if all the load is applied AND the last step converged. If all values are past the mark, break out of the loop. 
-        // 3, 4: If not, apply load increment AND reset the displacement increment vector, du to 0.
+        // The following logic is complex, but it does 3 things.
+        // 1: Check if all the load is applied AND the last step converged. If all values are past the mark, break out of the loop. 
+        // 2, 3: If not, apply load increment AND reset the displacement increment vector, du to 0.
         if (stepConverged)
         {
-            commitTrialValuesAtGaussPoints(elements, nelements); // Commit trial values to commited values.
             fullLoadApplied = 1; // Try this, if any of the values are not done, then this will be set back to 0 sometime in the for-loop.
             for (int i = 0; i < Km; i++)
             {
@@ -304,9 +301,19 @@ int main (char *args)
                 initElementInternalForceVector(FintE, Kem);
 
                 // Get the displacements for the element's nodes, u_e, and store them. One value for each DOF.
-                printf("\t\t\tDisplacements, u_e%d:   ", e);
+                printf("\t\t\tDisplacements, u_e%d, at (%p):   ", e, (void*)elements[e].nodeids);
                 for (int i = 0; i < nnodesElement; i++)
                 {
+                    if (elements[e].nodeids == NULL) {
+                        printf("Error: elements[%d].nodeids is NULL\n", e);
+                        exit(1);
+                    }
+                    int node_id = elements[e].nodeids[i];
+                    if (node_id < 0 || node_id >= nnodes) {
+                        printf("Error: node_id %d out of bounds for element %d (i=%d)\n", node_id, e, i);
+                        exit(1);
+                    }
+
                     for (int d = 0; d < DOF; d++) // Loop over each DOF
                     {
                         *(ue + i * DOF + d) = *(u + elements[e].nodeids[i] * DOF + d); // Store the displacement from the node with this id.
@@ -326,7 +333,8 @@ int main (char *args)
 
                     // Get the strain for this Gauss Point with the displacement and B matrix.
                     displacementStrain(epsilon, B, ue, nnodesElement, DOF);
-                    printf("\t\t\t\tStrain: ");
+
+                    printf("\t\t\t\tStrain: \t");
                     for (int i = 0; i < Dn; i++)
                     {
                         printf("%.7f\t", *(epsilon + i));
@@ -335,6 +343,7 @@ int main (char *args)
 
                     // Make trial stress
                     trialStress(sigmaTrial, D, epsilon, elements[e].epsilonP, Dn, i);
+
                     printf("\t\t\t\tTrial stress: ");
                     for (int i = 0; i < Dn; i++)
                     {
@@ -344,7 +353,9 @@ int main (char *args)
 
                     // Find deviatoric stress, von Mises equivalent stress, yield stress adjusted for existing plastic strain, and find von Mises Yield Function
                     deviatoricStress2D(sDeviatoric, sigmaTrial);
+
                     sigmaEq = vonMisesEquivalentStress2D(sDeviatoric);
+
                     sigmaYield = plasticCorrectedYieldStress(sigmaYieldInitial, H, elements[e].epsilonBarP[i]);
 
                     // Check von Mises Yield Function for yielding of the node. If elastic, use elastic material stiffness matrix. If plastic, run return mapping.
@@ -385,16 +396,15 @@ int main (char *args)
                         
                         
                         printf("\n\t\t\t\ttrialSigma: ");
-                        for (int j = 0; j < Dn; j++) printf("%.4f\t", elements[e].trialSigma[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.2f\t", elements[e].trialSigma[i * elements[e].gp + j]);
                         printf("\n\t\t\t\tcommitedSigma: ");
-                        for (int j = 0; j < Dn; j++) printf("%.4f\t", elements[e].sigma[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.12f\t", elements[e].sigma[i * elements[e].gp + j]);
                         printf("\n\t\t\t\ttrialEpsilonP: ");
-                        for (int j = 0; j < Dn; j++) printf("%.4f\t", elements[e].trialEpsilonP[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.12f\t", elements[e].trialEpsilonP[i * elements[e].gp + j]);
                         printf("\n\t\t\t\tcommitedEpsilonP: ");
-                        for (int j = 0; j < Dn; j++) printf("%.4f\t", elements[e].epsilonP[i * elements[e].gp + j]);
-                        printf("\n\t\t\t\ttrialEpsilonBarP: %.4f", elements[e].trialEpsilonBarP[i]);
-                        printf("\n\t\t\t\tcommittedEpsilonBarP: %.4f\n", elements[e].epsilonBarP[i]);
-                        
+                        for (int j = 0; j < Dn; j++) printf("%.12f\t", elements[e].epsilonP[i * elements[e].gp + j]);
+                        printf("\n\t\t\t\ttrialEpsilonBarP: %.12f", elements[e].trialEpsilonBarP[i]);
+                        printf("\n\t\t\t\tcommittedEpsilonBarP: %.12f\n", elements[e].epsilonBarP[i]);
                     }
                     else
                     {
@@ -429,7 +439,7 @@ int main (char *args)
             for (int i = 0; i < Km; i++)
             {
                 if (*(Fint + i) < 0) printf("%.4f\t", *(Fint + i));
-                else printf("+%.4f\t", *(Fint + i));
+                else printf("+%.4f   ", *(Fint + i));
             }
             printf("\n\n");
 
@@ -439,7 +449,7 @@ int main (char *args)
             {
                 *(r + i) = *(Fstep + i) - *(Fint + i);   
                 if (*(Fstep + i) < 0) printf("%.4f\t", *(Fstep + i));
-                else printf("+%.4f\t", *(Fstep + i));
+                else printf("+%.4f   ", *(Fstep + i));
             }
             printf("\n\n");
 
@@ -459,7 +469,7 @@ int main (char *args)
             // If not converged, solve the system.
             if (!stepConverged)
             {
-                printf("\tStep: %d, Load Step: %d . . . NOT CONVERGED . . . SOLVING SYSTEM\n\n", k, l);
+                printf("\tStep: %d, Load Step: %d . . . NOT CONVERGED . . . SOLVING SYSTEM\n", k, l);
 
                 // Solve system for current applied load.
                 if (skylineSolver)
@@ -471,16 +481,25 @@ int main (char *args)
                 {
                     // Solve regular matrix
                     croutReduction(K, Km, du, r);
+                    
                 }
 
+                printf("\t\tSolution of the system (transposed for ease of reading): \n\t\t");
+                for (int i = 0; i < Km; i++) printf(" %.12f   ", *(du + i));
+                printf("\n");
+
                 // Add the displacement increment to the global displacement vector
+                printf("\t\tTotal displacement of the system (transposed for ease of reading): \n\t\t");
                 for (int i = 0; i < Km; i++)
                 {
                     *(u + i) += *(du + i);
+                    printf(" %.12f   ", *(u + i));
                 }
+                printf("\n\n");
             }
             else
             {
+                commitTrialValuesAtGaussPoints(elements, nelements); // Commit trial values to commited values.
                 printf("\tStep: %d, Load Step: %d . . . CONVERGED . . . \n\n", k, l);
                 break;
             }
