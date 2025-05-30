@@ -95,7 +95,7 @@ int main (char *args)
     double v; // Poisson's ratio
     double sigmaYieldInitial; // Initial yield stress
     double H; // Hardening modulus
-    double G = shearModulus(E, v);
+    double G;
     
     // Constant values for the analysis
     int gp; // Gauss Points per element
@@ -123,6 +123,7 @@ int main (char *args)
     E = materials[0].E;
     v = materials[0].v;
     H = materials[0].H;
+    G = shearModulus(E, v);
     sigmaYieldInitial = materials[0].yield;
     int Km = nnodes * DOF; // Number of rows / columns of the global stiffness matrix.
     int Kem = nnodesElement * DOF;
@@ -193,7 +194,7 @@ int main (char *args)
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
     int loadIncrementSteps = 100; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%
-    int maxLoadSteps = 25; // Maximum allowed steps for each load step.
+    int maxLoadSteps = 50; // Maximum allowed steps for each load step.
     int stepConverged = 1; // Check for seeing if convergence has been reached. Set it initially to 1, so that the first load increment will not be 0.
     int fullLoadApplied = 0; // Check for seeing if the entire load is applied. Set initially to 0, and set to 1 only if all the Fload[i] >= Fext[i].
     int solutionFound = 0; // Check for seeing if the solution is found and converged (1), or if the iteration simply ended because the max number of steps was reached.
@@ -265,7 +266,7 @@ int main (char *args)
         stepConverged = 0;
 
         // Start load step
-        for (int l = 0; l < maxLoadSteps; l++)
+        for (int l = 0; l < (maxLoadSteps + 1); l++) // The +1 is so that the system is for conergence check and exiting later. 
         {
             printf("\n\tStep: %d, Load Step: %d . . . Running . . . \n\n", k, l);
             stepCounter += 1;
@@ -371,6 +372,12 @@ int main (char *args)
 
                         // Unit deviatoric stress, n
                         unitDeviatoricStress(nUnitDeviatoric, sDeviatoric, Dn);
+                        printf("\t\t\t\t\tn - unit deviatoric stress: ");
+                        for (int i = 0; i < Dn; i++)
+                        {
+                            printf("%.2f\t", *(nUnitDeviatoric + i));
+                        }
+                        printf("\n");
 
                         // Elasto-plastic material stiffness matrix, D_ep
                         elastoPlasticDMatrix(D, nUnitDeviatoric, H, Dn);
@@ -381,6 +388,15 @@ int main (char *args)
                         // Corrected trial stress
                         plasticStressCorrection(sigma, sigmaTrial, nUnitDeviatoric, G, deltaGamma, Dn);
 
+                        printf("\t\t\t\t\tCoorected stress: ");
+                        for (int i = 0; i < Dn; i++)
+                        {
+                            printf("%.2f\t", *(sigma + i));
+                        }
+                        printf("\n");
+
+                        printf("\t\t\t\t\tG - shear modulus: %.4f   f - yield function %.4f   deltaGamma: %.10f \n", G, f, deltaGamma);
+
                         // Append the contribution to the element internal force vector, f^e_int, with the corrected stress. The element internal force vector is summed for each element over all the Gauss Points.
                         elementInternalForceVector(FintE, Btrans, sigma, *detJ, sf[i].weight, Kem, Dn);
 
@@ -388,7 +404,7 @@ int main (char *args)
                         trialPlasticStrain(trialEpsilonP, elements[e].epsilonP, nUnitDeviatoric, deltaGamma, Dn, i);
 
                         // Trial plastic equivalent strain
-                        elements[e].trialEpsilonBarP[i] =  trialEquivalentPlasticStrain(deltaGamma);
+                        elements[e].trialEpsilonBarP[i] = elements[e].epsilonBarP[i] + trialEquivalentPlasticStrain(deltaGamma);
 
                         // Store trial values in element, but they are not to be commited before the load step converges.
                         for (int j = 0; j < Dn; j++)
@@ -441,29 +457,36 @@ int main (char *args)
             printf("F_int - Internal force vector\n");
             for (int i = 0; i < Km; i++)
             {
-                if (*(Fint + i) < 0) printf("%.4f\t", *(Fint + i));
+                if (*(Fint + i) < 0) printf("%.4f   ", *(Fint + i));
                 else printf("+%.4f   ", *(Fint + i));
             }
             printf("\n\n");
 
-            // Compute the residual, r, as f_ext - f_int
+            // Compute the residual, r, as f_ext - f_int, and print f_ext_step
             printf("F_step - External force vector at the current step\n");
             for (int i = 0; i < Km; i++)
             {
-                *(r + i) = *(Fstep + i) - *(Fint + i);   
-                if (*(Fstep + i) < 0) printf("%.4f\t", *(Fstep + i));
-                else printf("+%.4f   ", *(Fstep + i));
+                printf("%.4f   ", *(Fstep + i));
+                *(r + i) = *(Fstep + i) - *(Fint + i);  
             }
             printf("\n\n");
 
             // Set fixed displacements in the residual vector
             applyFixedDisplacementResidualVector(uFixed, r, Km);
 
+            // Print the residual vector
+            printf("r - residual force vector at the current step\n");
+            for (int i = 0; i < Km; i++)
+            { 
+                printf("%.4f   ", *(r + i));
+            }
+            printf("\n\n");
+
             // Check for convergence
             stepConverged = 1; // Make this prediction now, and correct it if ANY of the values in the residual are not below the threshold.
             for (int i = 0; i < Km; i++)
             {
-                if ( abs( *(r + i) ) > residualThreshold )
+                if ( fabs( *(r + i) ) > residualThreshold )
                 {
                     stepConverged = 0; // If the current residual value is greater than the threshold, the solution is not converged.
                 }
@@ -472,6 +495,13 @@ int main (char *args)
             // If not converged, solve the system.
             if (!stepConverged)
             {
+                // Check if this is the last load step, if so and the system did not converge, exit the program.
+                if (l == maxLoadSteps)
+                {
+                    fprintf(stderr, "Error: System did not converge for Step# %d, Load Step# %d", k, l);
+                    exit(1);
+                }
+
                 printf("\tStep: %d, Load Step: %d . . . NOT CONVERGED . . . SOLVING SYSTEM\n", k, l);
 
                 // Solve system for current applied load.
