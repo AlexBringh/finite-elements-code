@@ -15,7 +15,9 @@
 #include "inputData.h"
 #include "jacobian.h"
 #include "matrixUtils.h"
+#include "outputData.h"
 #include "postProcessing.h"
+#include "printUtils.h"
 #include "returnMapping.h"
 #include "stiffnessMatrix.h"
 #include "skyline.h"
@@ -550,11 +552,23 @@ int main (char *args)
     double *nodalStress;
     double *nodalStrain;
     double *nodalPlasticStrain;
+    int *nodeids = calloc(nnodes, sizeof(int));
 
     // Post-processing
     if (solutionFound)
     {
         postProcessingElastoPlastic(nodalStress, nodalStrain, nodalPlasticStrain, nnodes, u, elements, nelements, sf, Km);
+
+        // Print results to the terminal
+        printf("Post processing results: \nnode\tux\tuy\tsigmaEq \tstrainEq\tplasticStrainEq \n");
+        printDashedLines(50);
+        for (int i = 0; i < nnodes; i++)
+        {
+            printf("%d \t%.9f \t%.9f \t%.2f \t%.2f \t%.2f\n", i, *(u + i*DOF + 0), *(u + i*DOF + 1), *(nodalStress + i), *(nodalStrain + i), *(nodalPlasticStrain + i));
+            *(nodeids + i) = i;
+        }
+        printDashedLines(50);
+        outputCSV("sample/output.csv", nodeids, u, nodalStress, nodalStrain, nodalPlasticStrain);
     }
     else
     {
@@ -591,6 +605,7 @@ int main (char *args)
     free(nodalStress);
     free(nodalStrain);
     free(nodalPlasticStrain);
+    free(nodeids);
    
     return 0;
 }
