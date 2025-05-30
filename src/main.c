@@ -546,12 +546,20 @@ int main (char *args)
     // Post-processing
     if (solutionFound)
     {
+        // Print displacements
+        printf("Global displacements: ");
+        for (int i = 0; i < Km; i++) 
+        {
+            printf("%.6f   ", *(u + i));
+        }
+
         //postProcessingElastoPlastic (u, element, sf, Km);
     }
     else
     {
         // No solution was found. Print error message.
-        printf("No solutions were found for the analysis.");
+        fprintf(stderr, "No solutions were found for the analysis.");
+        return 1;
     }
 
 
