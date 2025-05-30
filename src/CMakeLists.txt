@@ -5,6 +5,7 @@ set(SRC_FILES main.c)
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 add_subdirectory(elements)
+add_subdirectory(postprocessing)
 
 if (BUILD_WITH_SOLVER)
     add_subdirectory(solver)

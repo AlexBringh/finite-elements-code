@@ -21,6 +21,7 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
         int m                       -> Size m, number of global degrees of freedom
     */
 
+    printf("Post-Processing #1\n");
     nodalStress = calloc(nnodes, sizeof(double));
     nodalStrain = calloc(nnodes ,sizeof(double));
     nodalPlasticStrain = calloc(nnodes, sizeof(double));
@@ -30,8 +31,8 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
     int gp = elements->gp;
 
     // These are temp values
-    double *stress = calloc(stressDim, sizeof(double));
-    double *strain = calloc(stressDim, sizeof(double));
+    double *stress = calloc(stressDim * nnodes, sizeof(double));
+    double *strain = calloc(stressDim * nnodes, sizeof(double));
     double *weights = calloc(nnodes, sizeof(double));
     double *tempStress = calloc(stressDim, sizeof(double));
     double *tempStrain = calloc(stressDim, sizeof(double));
@@ -44,6 +45,7 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
     double *Ni = calloc(4 * gp, sizeof(double));
     double N;
     int nodeid;
+    printf("Post-Processing #2\n");
 
     // Store the shape functions for convenience and code clarity.
     for (int p = 0; p < gp; p++) 
@@ -53,6 +55,7 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
             *(Ni + p * gp + i) = sf[p].Ni[i];
         }
     }
+    printf("Post-Processing #3\n");
 
     // Interpolate the contribution of each Gauss Point in each element to the nodal stresses and strains.
     for (int e = 0; e < nelements; e++) // Loop over elements
@@ -92,12 +95,13 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
                 for (int j = 0; j < stressDim; j++) // Loop over every stress dim. For 2D this is xx (normal), yy (normal) and xy (shear)
                 {
                     *(stress + nodeid * stressDim + j) += *(Ni + p * gp + i) * elements[e].sigma[p * gp + j]; // Shape function of every Gauss Point, corresponding to the i-th element, multiplied by the stress at the Gauss Point, for the current dim.
-                    *(strain + nodeid * stressDim + j) += *(Ni + p * gp + i) * *(tempStrain + p * gp + j); // Interpolated strain
+                    *(strain + nodeid * stressDim + j) += *(Ni + p * gp + i) * *(tempStrain + j); // Interpolated strain
                     
                 }
             }
         }
     }
+    printf("Post-Processing #4\n");
 
     // Average out the contibutions for each node.
     for (int i = 0; i < nnodes; i++)
@@ -112,6 +116,7 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
             *(nodalPlasticStrain + i) /= *(weights + i);
         }
     }
+    printf("Post-Processing #5\n");
 
 
     // Convert stress and strain at the nodes to von Mises equivalent stress and strain.
@@ -122,12 +127,15 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
         {
             *(tempStress + j) = *(stress + i * stressDim + j);
             *(tempStrain + j) = *(strain + i * stressDim + j);
+            printf("Post-Processing #6\n");
         }
         
         // Calculate and store von Mises Equivalent stress and strain.
         *(nodalStress + i) = vonMisesEquivalentStress2D(tempStress);
         *(nodalStrain + i) = vonMisesEquivalentStrain2D(tempStrain);
+        printf("Post-Processing #7\n");
     }   
+    printf("Post-Processing #8\n");
 
     free(stress);
     free(strain);

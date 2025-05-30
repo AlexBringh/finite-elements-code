@@ -4,7 +4,7 @@
 #include "elements.h"
 #include "jacobian.h"
 #include "shapeFunctions.h"
-#include "stiffnessMatrix.h"'
+#include "stiffnessMatrix.h"
 #include "vonMisesYield.h"
 
 
