@@ -254,7 +254,12 @@ int main (char *args)
             }
             if (fullLoadApplied)
             {
-                printf("Full loads are applied and solution converged on step %d. Proceeding to post-processing . . . \n\n", stepCounter);
+                printf("Full loads are applied and solution converged on step %d. Proceeding to post-processing . . . \n\nResulting node displacements:\n", stepCounter);
+                for (int i = 0; i < Km; i++)
+                {
+                    printf("%.6f   ", *(u + i));
+                }
+                printf("\n");
                 solutionFound = 1; // The solution has been found.
                 break; // Finish the loop.
             }
@@ -546,13 +551,6 @@ int main (char *args)
     // Post-processing
     if (solutionFound)
     {
-        // Print displacements
-        printf("Global displacements: ");
-        for (int i = 0; i < Km; i++) 
-        {
-            printf("%.6f   ", *(u + i));
-        }
-
         //postProcessingElastoPlastic (u, element, sf, Km);
     }
     else
