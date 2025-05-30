@@ -5,6 +5,7 @@ int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilo
 int deviatoricStress2D (double *sDeviatoric, double *sigmaTrial);
 int unitDeviatoricStress (double *nDeviatoric, double *sDeviatoric, int sn);
 double vonMisesEquivalentStress2D (double *sDeviatoric);
+double vonMisesEquivalentStrain2D (double *epsilon);
 double plasticCorrectedYieldStress (double sigmaYieldInitial, double H, double epsilonBarP);
 double vonMisesYieldFunction (double sigmaEq, double sigmaYield);
 

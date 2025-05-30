@@ -2,8 +2,12 @@
 #define POST_PROCESSING_H
 
 #include "elements.h"
+#include "jacobian.h"
 #include "shapeFunctions.h"
+#include "stiffnessMatrix.h"'
+#include "vonMisesYield.h"
 
-void postProcessingElastoPlastic (double *u, quadElement *elements, shapeFunctions2D *sf, int m);
+
+void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, double *nodalPlasticStrain, int nnodes, double *u, quadElement *elements, int nelements, shapeFunctions2D *sf, int m);
 
 #endif

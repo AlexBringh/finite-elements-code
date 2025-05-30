@@ -95,6 +95,38 @@ double vonMisesEquivalentStress2D (double *sDeviatoric)
     return sqrt( 3.0 / 2.0 * ( pow(*(sDeviatoric + 0), 2.0) + pow(*(sDeviatoric + 1), 2.0) + 2.0 * pow(*(sDeviatoric + 2), 2.0) ) );
 }
 
+double vonMisesEquivalentStrain2D (double *epsilon)
+{
+    /*
+        Calculates the effective strain / vons Mises Equivalent Strain in 2D.
+        Calculates mean strain and deviatoric strain from given strain. Uses this to calculate effective strain.
+
+        Input:
+        double *epsilon -> Pointer to strain vector, where in 2D is a 3x1 vector. 
+
+        Output
+        double strainEq -> Calculated von Mises equivalent strain.
+    */
+
+    // Find mean strain
+    double meanStrain = 0;
+    for (int i = 0; i < 3; i++) meanStrain += 1.0 / 3.0 * *(epsilon + i);
+
+    // Calculate deviatoric strain'
+    double *deviatoricStrain = calloc(3, sizeof(double));
+    *(deviatoricStrain + 0) = *(epsilon + 0) - meanStrain;
+    *(deviatoricStrain + 1) = *(epsilon + 1) - meanStrain;
+    *(deviatoricStrain + 2) = *(epsilon + 2);
+
+    // Calculate von Mises equivalent
+    double epsilonEq = sqrt( 2.0 / 3.0 * ( pow(*(deviatoricStrain + 0), 2.0) + pow(*(deviatoricStrain + 1), 2.0) + pow(*(deviatoricStrain + 2), 2.0) ) );
+
+    // Free temp values
+    free(deviatoricStrain);
+
+    return epsilonEq;
+}
+
 double plasticCorrectedYieldStress (double sigmaYieldInitial, double H, double epsilonBarP)
 {
     /*

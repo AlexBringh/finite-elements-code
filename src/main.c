@@ -257,7 +257,7 @@ int main (char *args)
                 printf("Full loads are applied and solution converged on step %d. Proceeding to post-processing . . . \n\nResulting node displacements:\n", stepCounter);
                 for (int i = 0; i < Km; i++)
                 {
-                    printf("%.6f   ", *(u + i));
+                    printf("%.12f   ", *(u + i));
                 }
                 printf("\n");
                 solutionFound = 1; // The solution has been found.
@@ -546,12 +546,15 @@ int main (char *args)
 
     printf("\n\nNewton-Raphson iteration has concluded after %d steps! \n\n", stepCounter);
 
-    
+    // Nodal results. These are allocated memory in post-processing function.
+    double *nodalStress;
+    double *nodalStrain;
+    double *nodalPlasticStrain;
 
     // Post-processing
     if (solutionFound)
     {
-        //postProcessingElastoPlastic (u, element, sf, Km);
+        postProcessingElastoPlastic(nodalStress, nodalStrain, nodalPlasticStrain, nnodes, u, elements, nelements, sf, Km);
     }
     else
     {
@@ -585,6 +588,9 @@ int main (char *args)
     free(sigmaTrial);
     free(sDeviatoric);
     free(nUnitDeviatoric);
+    free(nodalStress);
+    free(nodalStrain);
+    free(nodalPlasticStrain);
    
     return 0;
 }
