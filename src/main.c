@@ -193,12 +193,12 @@ int main (char *args)
 
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
-    int loadIncrementSteps = 100; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%
-    int maxLoadSteps = 50; // Maximum allowed steps for each load step.
+    int loadIncrementSteps = 1000; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%. There is no set size, however 1% - 5% per step is common. The system should be able to converge within 25 iterations per applied load step. Smaller mesh tolerates larger step sizes than larger mesh sizes.
+    int maxLoadSteps = 25; // Maximum allowed steps for each load step.
     int stepConverged = 1; // Check for seeing if convergence has been reached. Set it initially to 1, so that the first load increment will not be 0.
     int fullLoadApplied = 0; // Check for seeing if the entire load is applied. Set initially to 0, and set to 1 only if all the Fload[i] >= Fext[i].
     int solutionFound = 0; // Check for seeing if the solution is found and converged (1), or if the iteration simply ended because the max number of steps was reached.
-    double residualThreshold = 0.1; // Threshold for the absolute value of the residual for the convergence criteria.
+    double residualThreshold = 10; // Threshold for the absolute value of the residual for the convergence criteria. Can use a absolute threshold where abs(r) < 10^(-3) for small applied loads, or relative thresholds for large loads, where abs(r) / f_ext < 10^(-6). For a (smallest) applied load of 80 000 000 N, this means that the threshold should be TOPS 80 N, but preferably smaller.
     double dispIncrThreshold = 1; // Largest displacement increment before solution is thrown.
 
     // Stresses and strains
