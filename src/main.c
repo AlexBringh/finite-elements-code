@@ -138,6 +138,23 @@ int main (char *args)
         printf("%d\t\t%d\t\t%d\t\t%.2f\t\t%.2f \n", i, *(uFixed + i*DOF + 0), *(uFixed + i*DOF + 1), *(Fext + i * DOF + 0), *(Fext + i * DOF + 1));
     }
 
+    printf("\nNode      x          y\n");
+    for (int i = 0; i < nnodes; i++)
+    {
+        printf(" %d    %.6f   %.6f\n", i, nodes[i].x, nodes[i].y);
+    }
+
+    printf("\nElements\n");
+    for (int e = 0; e < nelements; e++)
+    {
+        printf("Element #%d:   nnodes: %d   gp: %d   dof: %d\n", e, elements[e].nnodes, elements[e].gp, elements[e].dof);
+        for (int i = 0; i < elements[e].nnodes; i++)
+        {
+            printf("\tNodeid: %d   x: %.3f y: %.3f\n", elements[e].nodeids[i], elements[e].coords[i * elements[e].dof + 0], elements[e].coords[i * elements[e].dof + 1]);
+        }
+        printf("\n");
+    }
+
     
     double *K;
     skylineMatrix *Kskyline;
@@ -195,7 +212,7 @@ int main (char *args)
 
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
-    int loadIncrementSteps = 1000; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%. There is no set size, however 1% - 5% per step is common. The system should be able to converge within 25 iterations per applied load step. Smaller mesh tolerates larger step sizes than larger mesh sizes.
+    int loadIncrementSteps = 100; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%. There is no set size, however 1% - 5% per step is common. The system should be able to converge within 25 iterations per applied load step. Smaller mesh tolerates larger step sizes than larger mesh sizes.
     int maxLoadSteps = 50; // Maximum allowed steps for each load step. Should only require 25, but for smaller systems with large loads, or systems where nonlinearity is strong in general, this may not be practical.
     int stepConverged = 1; // Check for seeing if convergence has been reached. Set it initially to 1, so that the first load increment will not be 0.
     int fullLoadApplied = 0; // Check for seeing if the entire load is applied. Set initially to 0, and set to 1 only if all the Fload[i] >= Fext[i].
@@ -300,7 +317,9 @@ int main (char *args)
             // Loop through all elements
             for (int e = 0; e < nelements; e++)
             {
-                printf("\t\tStep: %d, Load Step: %d . . . Analysing element #%d . . . \n", k, l, e);
+                printf("\t\tStep: %d, Load Step: %d . . . Analysing element #%d . . . nodeids: ( ", k, l, e);
+                for (int i = 0; i < elements[e].nnodes; i++) printf(" %d  ", elements[e].nodeids[i]);
+                printf(") \n");
 
                 // Init / reset K_e and F_int_e for the current element
                 initElementStiffnessMatrix(Ke, Kem);
@@ -351,9 +370,10 @@ int main (char *args)
                     trialStress(sigmaTrial, D, epsilon, elements[e].epsilonP, Dn, i);
 
                     printf("\t\t\t\tTrial stress: ");
-                    for (int i = 0; i < Dn; i++)
+                    for (int j = 0; j < Dn; j++)
                     {
-                        printf("%.2f\t", *(sigmaTrial + i));
+                        printf("%.2f\t", *(sigmaTrial + j));
+                        elements[e].trialSigma[i * Dn + j] = *(sigmaTrial + j); // TODO: Figure out why the code hates setting this value
                     }
                     printf("\n");
 
@@ -380,9 +400,9 @@ int main (char *args)
                         // Unit deviatoric stress, n
                         unitDeviatoricStress(nUnitDeviatoric, sDeviatoric, Dn);
                         printf("\t\t\t\t\tn - unit deviatoric stress: ");
-                        for (int i = 0; i < Dn; i++)
+                        for (int j = 0; j < Dn; j++)
                         {
-                            printf("%.2f\t", *(nUnitDeviatoric + i));
+                            printf("%.2f\t", *(nUnitDeviatoric + j));
                         }
                         printf("\n");
 
@@ -396,9 +416,9 @@ int main (char *args)
                         plasticStressCorrection(sigma, sigmaTrial, nUnitDeviatoric, G, deltaGamma, Dn);
 
                         printf("\t\t\t\t\tCoorected stress: ");
-                        for (int i = 0; i < Dn; i++)
+                        for (int j = 0; j < Dn; j++)
                         {
-                            printf("%.2f\t", *(sigma + i));
+                            printf("%.2f\t", *(sigma + j));
                         }
                         printf("\n");
 
@@ -416,26 +436,37 @@ int main (char *args)
                         // Store trial values in element, but they are not to be commited before the load step converges.
                         for (int j = 0; j < Dn; j++)
                         {
-                            elements[e].trialSigma[i * elements[e].gp + j] = *(sigma + j);
-                            elements[e].trialEpsilonP[i * elements[e].gp + j] = *(trialEpsilonP + j);
+                            elements[e].trialSigma[i * Dn + j] = *(sigma + j);
+                            elements[e].trialEpsilonP[i * Dn + j] = *(trialEpsilonP + j);
                         }
                         
                         
-                        printf("\n\t\t\t\ttrialSigma: ");
-                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].trialSigma[i * elements[e].gp + j]);
-                        printf("\n\t\t\t\tcommitedSigma: ");
-                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].sigma[i * elements[e].gp + j]);
-                        printf("\n\t\t\t\ttrialEpsilonP: ");
-                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].trialEpsilonP[i * elements[e].gp + j]);
-                        printf("\n\t\t\t\tcommitedEpsilonP: ");
-                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].epsilonP[i * elements[e].gp + j]);
-                        printf("\n\t\t\t\ttrialEpsilonBarP: %.6f", elements[e].trialEpsilonBarP[i]);
-                        printf("\n\t\t\t\tcommittedEpsilonBarP: %.6f\n", elements[e].epsilonBarP[i]);
+                        printf("\n\t\t\t\tsigma: ");
+                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].trialSigma[i * Dn + j]);
+                        printf("\n\t\t\t\t\t\tcommitedSigma: ");
+                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].sigma[i * Dn + j]);
+                        printf("\n\t\t\t\t\t\ttrialEpsilonP: ");
+                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].trialEpsilonP[i * Dn + j]);
+                        printf("\n\t\t\t\t\t\tcommitedEpsilonP: ");
+                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].epsilonP[i * Dn + j]);
+                        printf("\n\t\t\t\t\t\ttrialEpsilonBarP: %.6f", elements[e].trialEpsilonBarP[i]);
+                        printf("\n\t\t\t\t\t\tcommittedEpsilonBarP: %.6f\n", elements[e].epsilonBarP[i]);
                     }
                     else
                     {
                         // Append the contribution to the element internal force vector, f^e_int, with the trial stress. The element internal force vector is summed for each element over all the Gauss Points.
                         printf("\t\t\t\t\tNO Yield at GP:%d, \tEq Stress: %.4f, \tCorrected Yield Stress: %.4f\n", i, sigmaEq, sigmaYield);
+
+                        printf("\n\t\t\t\t\t\ttrialSigma: ");
+                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].trialSigma[i * elements[e].gp + j]);
+                        printf("\n\t\t\t\t\t\tcommitedSigma: ");
+                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].sigma[i * elements[e].gp + j]);
+                        printf("\n\t\t\t\t\t\ttrialEpsilonP: ");
+                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].trialEpsilonP[i * elements[e].gp + j]);
+                        printf("\n\t\t\t\t\t\tcommitedEpsilonP: ");
+                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].epsilonP[i * elements[e].gp + j]);
+                        printf("\n\t\t\t\t\t\ttrialEpsilonBarP: %.6f", elements[e].trialEpsilonBarP[i]);
+                        printf("\n\t\t\t\t\t\tcommittedEpsilonBarP: %.6f\n", elements[e].epsilonBarP[i]);
                         elementInternalForceVector(FintE, Btrans, sigmaTrial, *detJ, sf[i].weight, Kem, Dn);
                     }
 
@@ -561,13 +592,18 @@ int main (char *args)
 
         // Print results to the terminal
         printf("Post processing results: \nnode\tux\tuy\tsigmaEq \tstrainEq\tplasticStrainEq \n");
-        printDashedLines(50);
+        printDashedLines(80);
         for (int i = 0; i < nnodes; i++)
         {
-            printf("%d \t%.9f \t%.9f \t%.2f \t%.2f \t%.2f\n", i, *(u + i*DOF + 0), *(u + i*DOF + 1), *(nodalStress + i), *(nodalStrain + i), *(nodalPlasticStrain + i));
+            printf("%d   ", i);
+            printf("%.9f   ", *(u + i*DOF + 0));
+            printf("%.9f   ", *(u + i*DOF + 1));
+            printf("%.2f   ", *(nodalStress + i));
+            printf("%.2f   ", *(nodalStrain + i));
+            printf("%.2f \n", *(nodalPlasticStrain + i));
             *(nodeids + i) = i;
         }
-        printDashedLines(50);
+        printDashedLines(80);
         outputCSV("sample/output.csv", nodeids, u, nodalStress, nodalStrain, nodalPlasticStrain);
     }
     else

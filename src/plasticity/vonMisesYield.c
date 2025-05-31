@@ -23,9 +23,9 @@ int trialStress (double *sigmaTrial, double *De, double *epsilon, double *epsilo
     double *epsilonPGP = malloc(Dn * sizeof(double));
 
     // Reset trial stress
-    for (int i = 0; i < Dn * Dn; i++) *(sigmaTrial + i) = 0;
+    for (int i = 0; i < Dn; i++) *(sigmaTrial + i) = 0;
 
-    // Extract the plsatic strain tensors for the current Gauss Point
+    // Extract the plastic strain tensors for the current Gauss Point
     for (int i = 0; i < Dn; i++)
     {
         *(epsilonCorrected + i) = 0.0;

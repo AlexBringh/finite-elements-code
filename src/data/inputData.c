@@ -245,12 +245,13 @@ int readElements(const char *filename, quadElement **elements_out, int *nelement
             // Allocate internal stress/strain arrays
             e.sigma             = calloc(stressStrainSize, sizeof(double));
             e.epsilonP          = calloc(stressStrainSize, sizeof(double));
-            e.epsilonBarP       = calloc(stressStrainSize, sizeof(double));
+            e.epsilonBarP       = calloc(gp, sizeof(double));
             e.trialSigma        = calloc(stressStrainSize, sizeof(double));
             e.trialEpsilonP     = calloc(stressStrainSize, sizeof(double));
             e.trialEpsilonBarP  = calloc(gp, sizeof(double));
 
-            elements[element_count++] = e;
+            elements[element_count] = e;
+            element_count += 1;
         }
 
         if (section > 3) break; // done reading element data

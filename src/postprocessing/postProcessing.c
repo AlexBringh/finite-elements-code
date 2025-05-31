@@ -94,8 +94,10 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
 
                 for (int j = 0; j < stressDim; j++) // Loop over every stress dim. For 2D this is xx (normal), yy (normal) and xy (shear)
                 {
-                    *(stress + nodeid * stressDim + j) += *(Ni + p * gp + i) * elements[e].sigma[p * gp + j]; // Shape function of every Gauss Point, corresponding to the i-th element, multiplied by the stress at the Gauss Point, for the current dim.
-                    *(strain + nodeid * stressDim + j) += *(Ni + p * gp + i) * *(tempStrain + j); // Interpolated strain
+                    double NiCurrent = *(Ni + p * gp + i);
+                    printf("%.4f \n", elements[e].sigma[p * stressDim + j]);
+                    *(stress + nodeid * stressDim + j) += NiCurrent * elements[e].sigma[p * stressDim + j]; // Shape function of every Gauss Point, corresponding to the i-th element, multiplied by the stress at the Gauss Point, for the current dim.
+                    *(strain + nodeid * stressDim + j) += NiCurrent * *(tempStrain + j); // Interpolated strain
                     
                 }
             }
@@ -110,10 +112,10 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
         {
             for (int j = 0; j < stressDim; j++)
             {
-                *(stress + i * stressDim + j) /= *(weights + i);
-                *(strain + i * stressDim + j) /= *(weights + i);
+                *(stress + i * stressDim + j) /= (double) *(weights + i);
+                *(strain + i * stressDim + j) /= (double) *(weights + i);
             }
-            *(nodalPlasticStrain + i) /= *(weights + i);
+            *(nodalPlasticStrain + i) /= (double) *(weights + i);
         }
     }
     printf("Post-Processing #5\n");
@@ -127,13 +129,14 @@ void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, doub
         {
             *(tempStress + j) = *(stress + i * stressDim + j);
             *(tempStrain + j) = *(strain + i * stressDim + j);
-            printf("Post-Processing #6\n");
+            printf("Post-Processing #6: %.4f\n", *(strain + i * stressDim + j));
         }
         
         // Calculate and store von Mises Equivalent stress and strain.
         *(nodalStress + i) = vonMisesEquivalentStress2D(tempStress);
         *(nodalStrain + i) = vonMisesEquivalentStrain2D(tempStrain);
-        printf("Post-Processing #7\n");
+        printf("Post-Processing #7: %.2f\n", *(nodalStress + i));
+        printf("Post-Processing #7.5: %.2f\n", *(nodalStrain + i));
     }   
     printf("Post-Processing #8\n");
 
