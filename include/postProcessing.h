@@ -8,6 +8,6 @@
 #include "vonMisesYield.h"
 
 
-void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, double *nodalPlasticStrain, int nnodes, double *u, quadElement *elements, int nelements, shapeFunctions2D *sf, int m);
+void postProcessingElastoPlastic (double *nodalStress, double *nodalStrain, double *nodalPlasticStrain, int nnodes, double *u, quadElement *elements, int nelements, shapeFunctions2D *sf, int m, double E);
 
 #endif

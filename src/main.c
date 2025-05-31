@@ -458,13 +458,13 @@ int main (char *args)
                         printf("\t\t\t\t\tNO Yield at GP:%d, \tEq Stress: %.4f, \tCorrected Yield Stress: %.4f\n", i, sigmaEq, sigmaYield);
 
                         printf("\n\t\t\t\t\t\ttrialSigma: ");
-                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].trialSigma[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].trialSigma[i * Dn + j]);
                         printf("\n\t\t\t\t\t\tcommitedSigma: ");
-                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].sigma[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.1f\t", elements[e].sigma[i * Dn + j]);
                         printf("\n\t\t\t\t\t\ttrialEpsilonP: ");
-                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].trialEpsilonP[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].trialEpsilonP[i * Dn + j]);
                         printf("\n\t\t\t\t\t\tcommitedEpsilonP: ");
-                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].epsilonP[i * elements[e].gp + j]);
+                        for (int j = 0; j < Dn; j++) printf("%.6f\t", elements[e].epsilonP[i * Dn + j]);
                         printf("\n\t\t\t\t\t\ttrialEpsilonBarP: %.6f", elements[e].trialEpsilonBarP[i]);
                         printf("\n\t\t\t\t\t\tcommittedEpsilonBarP: %.6f\n", elements[e].epsilonBarP[i]);
                         elementInternalForceVector(FintE, Btrans, sigmaTrial, *detJ, sf[i].weight, Kem, Dn);
@@ -579,31 +579,31 @@ int main (char *args)
 
     printf("\n\nNewton-Raphson iteration has concluded after %d steps! \n\n", stepCounter);
 
-    // Nodal results. These are allocated memory in post-processing function.
-    double *nodalStress;
-    double *nodalStrain;
-    double *nodalPlasticStrain;
+    // Nodal results. 
+    double *nodalStress = calloc(nnodes, sizeof(double));;
+    double *nodalStrain = calloc(nnodes ,sizeof(double));;
+    double *nodalPlasticStrain = calloc(nnodes, sizeof(double));;
     int *nodeids = calloc(nnodes, sizeof(int));
 
     // Post-processing
     if (solutionFound)
     {
-        postProcessingElastoPlastic(nodalStress, nodalStrain, nodalPlasticStrain, nnodes, u, elements, nelements, sf, Km);
+        postProcessingElastoPlastic(nodalStress, nodalStrain, nodalPlasticStrain, nnodes, u, elements, nelements, sf, Km, E);
 
         // Print results to the terminal
-        printf("Post processing results: \nnode\tux\tuy\tsigmaEq \tstrainEq\tplasticStrainEq \n");
-        printDashedLines(80);
+        printf("Post processing results: \nnode\t   ux\t          uy\t          sigmaEq\t   strainEq\t plasticStrainEq \n");
+        printDashedLines(90);
         for (int i = 0; i < nnodes; i++)
         {
-            printf("%d   ", i);
-            printf("%.9f   ", *(u + i*DOF + 0));
-            printf("%.9f   ", *(u + i*DOF + 1));
-            printf("%.2f   ", *(nodalStress + i));
-            printf("%.2f   ", *(nodalStrain + i));
-            printf("%.2f \n", *(nodalPlasticStrain + i));
+            printf(" %d      ", i);
+            printf("%.9f     ", *(u + i*DOF + 0));
+            printf("%.9f     ", *(u + i*DOF + 1));
+            printf("%.2f     ", *(nodalStress + i));
+            printf("%.9f     ", *(nodalStrain + i));
+            printf("%.9f   \n", *(nodalPlasticStrain + i));
             *(nodeids + i) = i;
         }
-        printDashedLines(80);
+        printDashedLines(90);
         outputCSV("sample/output.csv", nodeids, u, nodalStress, nodalStrain, nodalPlasticStrain);
     }
     else

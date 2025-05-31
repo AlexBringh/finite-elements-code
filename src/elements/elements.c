@@ -18,8 +18,8 @@ void commitTrialValuesAtGaussPoints (quadElement *element, int nelements)
         {
             for (int j = 0; j < 3; j++)
             {
-                element[e].sigma[i * element[e].gp + j] = element[e].trialSigma[i * element[e].gp + j];
-                element[e].epsilonP[i * element[e].gp + j] = element[e].trialEpsilonP[i * element[e].gp + j];
+                element[e].sigma[i * 3 + j] = element[e].trialSigma[i * 3 + j];
+                element[e].epsilonP[i * 3 + j] = element[e].trialEpsilonP[i * 3 + j];
             }
             element[e].epsilonBarP[i] = element[e].trialEpsilonBarP[i];
         }
