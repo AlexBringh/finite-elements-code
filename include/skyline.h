@@ -3,19 +3,24 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define SKYLINE_BUFFER 16  // Additional space when reallocating
 
 typedef struct
 {
-    int n;
-    double *cellData;
-    int *colIndex;
-    int *colTop;
+    int n;              // Matrix dimension
+    double *cellData;   // Non-zero values (skyline storage)
+    int *colIndex;      // Index into cellData where each column starts
+    int *colTop;        // Row index of the top non-zero entry in each column
+    int storedCells;    // Actual number of stored values in cellData
+    int capacity;       // Capacity allocated to cellData
 } skylineMatrix;
 
-skylineMatrix* initSkylineMatrix (int n, int *startRow);
-int addSkylineElement (skylineMatrix* matrix, int m, int n, double val);
-int setSkylineElement (skylineMatrix* matrix, int m, int n, double val);
-double getSkylineElement (skylineMatrix* matrix, int m, int n);
-int resetSkylineMatrix (skylineMatrix *matrix);
+void initSkylineMatrix(skylineMatrix *mat, int n);
+void resetSkylineMatrix (skylineMatrix *mat);
+void addToSkyline(skylineMatrix *mat, int i, int j, double value);
+double getFromSkyline(skylineMatrix *mat, int i, int j);
+void solveSkylineSystem(skylineMatrix *mat, double *r, double *u);
 
 #endif

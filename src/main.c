@@ -21,7 +21,6 @@
 #include "returnMapping.h"
 #include "stiffnessMatrix.h"
 #include "skyline.h"
-#include "solveCroutSkyline.h"
 #include "shapeFunctions.h"
 #include "vonMisesYield.h"
 
@@ -546,7 +545,7 @@ int main (char *args)
                 if (skylineSolver)
                 {
                     // Solve skyline matrix
-                    croutSkyline(Kskyline);
+                    solveSkylineSystem(Kskyline, r, u);
                 }
                 else
                 {
