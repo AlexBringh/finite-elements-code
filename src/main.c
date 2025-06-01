@@ -212,8 +212,8 @@ int main (char *args)
 
     // Variables used in the Newton-Raphson iteration.
     int stepCounter = 0;
-    int loadIncrementSteps = 1000; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%. There is no set size, however 1% - 5% per step is common. The system should be able to converge within 25 iterations per applied load step. Smaller mesh tolerates larger step sizes than larger mesh sizes.
-    int maxLoadSteps = 50; // Maximum allowed steps for each load step. Should only require 25, but for smaller systems with large loads, or systems where nonlinearity is strong in general, this may not be practical.
+    int loadIncrementSteps = 100; // Number of load increment steps. Percent = 1/loadIncrementSteps applied load at each step. 100 = 1%, 50 = 2%, 25 = 4%, 20 = 5%, 10 = 10%. There is no set size, however 1% - 5% per step is common. The system should be able to converge within 25 iterations per applied load step. Smaller mesh tolerates larger step sizes than larger mesh sizes.
+    int maxLoadSteps = 100; // Maximum allowed steps for each load step. Should only require 25, but for smaller systems with large loads, or systems where nonlinearity is strong in general, this may not be practical.
     int stepConverged = 1; // Check for seeing if convergence has been reached. Set it initially to 1, so that the first load increment will not be 0.
     int fullLoadApplied = 0; // Check for seeing if the entire load is applied. Set initially to 0, and set to 1 only if all the Fload[i] >= Fext[i].
     int solutionFound = 0; // Check for seeing if the solution is found and converged (1), or if the iteration simply ended because the max number of steps was reached.
