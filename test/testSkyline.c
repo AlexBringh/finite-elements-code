@@ -17,9 +17,10 @@ int main() {
     addToSkyline(&mat, 0.0, 1.0, -2.0);
     addToSkyline(&mat, 1.0, 1.0, 5.0);
     addToSkyline(&mat, 1.0, 2.0, -1.0);
-    addToSkyline(&mat, 2.0, 2.0, 6.0);
+    addToSkyline(&mat, 2.0, 2.0, 8.0);
     addToSkyline(&mat, 0.0, 2.0, 3.0);
     addToSkyline(&mat, 0.0, 1.0, 7.0);
+    addToSkyline(&mat, 2.0, 2.0, 2.0);
 
     printf("Matrix: \n");
     for(int i = 0; i < n; i++)
@@ -39,6 +40,20 @@ int main() {
     printf("Displacement vector u:\n");
     for (int i = 0; i < n; i++) {
         printf("u[%d] = %f\n", i, u[i]);
+    }
+
+    printf("Stored cells: %d\n", mat.storedCells);
+
+    resetSkylineMatrix(&mat);
+
+    printf("Reset Matrix: \n");
+    for(int i = 0; i < mat.n; i++)
+    {
+        for (int j = 0; j < mat.n; j++)
+        {
+            printf("%.4f   ", getFromSkyline(&mat, i, j));
+        }
+        printf("\n");
     }
 
     free(mat.cellData);

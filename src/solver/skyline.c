@@ -48,9 +48,10 @@ void initSkylineMatrix(skylineMatrix *mat, int n)
     mat->colIndex = (int*)calloc(n + 1, sizeof(int)); // n+1 to simplify last column
     mat->capacity = n * SKYLINE_BUFFER;
     mat->cellData = allocateAndZero(mat->capacity);
-    mat->storedCells = 0;
-    for (int i = 0; i <= n; i++) {
+    mat->storedCells = n; // We assume that the diagonal is always atleast present.
+    for (int i = 0; i < n; i++) {
         mat->colIndex[i] = 0;
+        mat->colTop[i] = i; // Initially, set the column top to be the diagonal.
     }
 }
 
@@ -64,6 +65,11 @@ void resetSkylineMatrix(skylineMatrix *mat)
         skylineMatrix *mat  -> Pointer to skyline matrix.
     */
     memset(mat->cellData, 0, sizeof(double) * mat->storedCells);
+    mat->storedCells = 0;
+    for (int i = 0; i < mat->n; i++)
+    {
+        mat->colTop[i] = i;
+    }
 }
 
 
