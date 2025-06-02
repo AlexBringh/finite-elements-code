@@ -18,6 +18,8 @@ int main() {
     addToSkyline(&mat, 1.0, 1.0, 5.0);
     addToSkyline(&mat, 1.0, 2.0, -1.0);
     addToSkyline(&mat, 2.0, 2.0, 6.0);
+    addToSkyline(&mat, 0.0, 2.0, 3.0);
+    addToSkyline(&mat, 0.0, 1.0, 7.0);
 
     printf("Matrix: \n");
     for(int i = 0; i < n; i++)

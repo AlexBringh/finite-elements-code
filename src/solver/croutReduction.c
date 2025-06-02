@@ -118,6 +118,12 @@ void partialPivot (double *A, int m, int *P, int k)
         x2 can then have its largest value, excluding the value on the same row as x1, on the next row on the diagonal.
 
         This process does, unfortuantely add complexity and therefore computation time, however it is absolutely necessary to limit the amount of computational error or algorithm breakdowns caused by potential small values being placed on the diagonal of the L-matrix later.
+
+        Inputs:
+        double *A   -> Pointer to matrix A. Results are stored here
+        int m       -> Size m of matrix and vectors
+        int *P      -> Partial pivoting indices
+        int k       -> Column-index, k
     */
 
     // Check that the values in P are within bounds.
@@ -156,7 +162,18 @@ void partialPivot (double *A, int m, int *P, int k)
 
 int luDecomposition (double *A, int m, double *L, double *U, int *P)
 {
-    // TODO documentation
+    /*
+        Decompose the matrix, A into upper- and lower diagonal matrices, U and L,
+        such that LU = A. Performs partial pivoting along the steps to reduce
+        the risk of division by 0 errors.
+
+        Inputs:
+        double *A   -> Pointer to matrix A, the system to be solved
+        int m       -> Size m for the matrices.
+        double *L   -> Pointer to matrix L
+        double *U   -> Pointer to matrix U
+        int *P      -> Pointer to pivot indices
+    */
     int n = m; // n represents columns.
 
     // Initialize L and U as matrices of 0s.
@@ -223,7 +240,14 @@ int luDecomposition (double *A, int m, double *L, double *U, int *P)
 
 int permutateVectorB (double *B, int *P, int m)
 {
-    // TODO documentation
+    /*
+        Permutate vector B after partial pivoting to ensure the matrix indices match.
+        
+        Inputs:
+        double *B   -> Pointer to B vector. Results are stored here.
+        int *P      -> Pointer to pivot indices, P.
+        int m       -> Size m of the vector, B.
+    */
     // Reserve memory for a temporary array for storing sorted B-values.
     double *tempB = malloc(m * sizeof(double));
     if (tempB == NULL)
@@ -254,7 +278,15 @@ int permutateVectorB (double *B, int *P, int m)
 
 int forwardSubstitution (double *B, int m, double *L, double *y)
 {
-    // TODO documentation
+    /*
+        Perform forward substitution Lb = y
+
+        Inputs:
+        double *B   -> Pointer to vector B
+        int m       -> Size m of the matrix and vector
+        double *L   -> Pointer to lower diagonal matrix
+        double *y   -> Pointer to vector, y. Results are stored here.
+    */
     int n = m;
     for (int i = 0; i < m; i++)
     {
@@ -271,7 +303,15 @@ int forwardSubstitution (double *B, int m, double *L, double *y)
 
 int backwardSubstitution (double *x, double *y, double *U, int m)
 {
-    // TODO documentation
+    /*
+        Perform backward substitution Lx = y to solve the system
+
+        Inputs: 
+        double *x   -> Pointer to the vector, x, where the solution is stored.
+        double *y   -> Pointer to vector, y, from previous steps of the solution.
+        double *U   -> Pointer to upper-diagonal matrix, U.
+        int m       -> Size m of the matrix and vectors.
+    */
     int n = m;
     for (int i = n - 1; i >= 0; i--)
     {
