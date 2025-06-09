@@ -11,6 +11,8 @@
 // Local function prototypes for functions that are only to be used inside this file.
 double* allocateAndZero(int size);
 void ensureCapacity(skylineMatrix *mat, int extraNeeded);
+int checkColumnForCellIndex(skylineMatrix *mat, int i, int j);
+int getCellDataIndex (skylineMatrix *mat, int i, int j);
 
 double* allocateAndZero(int size) 
 {
@@ -165,6 +167,97 @@ void addToSkyline(skylineMatrix *mat, int i, int j, double value)
     mat->cellData[idx] += value;
 }  
 
+void newaddToSkyline(skylineMatrix *mat, int i, int j, double value)
+{
+    if (i > j) return; // Only store the upper triangle.
+    if (value == 0.0) return; // We only store nonzero values.
+
+    // Calc the index in mat->cellData for the value
+    int index = getCellDataIndex(mat, i, j);
+
+    // Check if there is not a value stored for the cell already.
+    if (checkColumnForCellIndex(mat, i, j))
+    {
+        // There is a value stored already.
+        mat->cellData[index] += value;
+    }
+    else
+    {
+        // There is not already a value stored.
+
+        // Determine how many cells to move over (distance from colTop to current row index)
+        int move = mat->colTop[j] - i;
+
+        // Ensure that there is enough memory to move the cells
+        ensureCapacity(mat, move);
+
+        // Move the stored data from this current index, as many slots back as 'move' determines.
+        int colHeight = j - mat->colTop[j] + 1;
+        memmove(mat->cellData + index + move, mat->cellData + index, sizeof(double) * colHeight);
+        memset(mat->cellData + index, 0, sizeof(double) * move);
+
+        // Add the value to the cell
+        mat->cellData[index] += value;
+
+        // Update 'storedCells'
+        mat->storedCells += move;
+
+        // Update 'colIndex' for all columns after (not including) the j-th column
+        for (int k = j + 1; k < mat->n; k++)
+        {
+            mat->colIndex[k] += move;
+        }
+
+        // Update 'colTop'
+        mat->colTop[j] += move;
+    }
+}
+
+int checkColumnForCellIndex(skylineMatrix *mat, int i, int j)
+{
+    /*
+        Checks if the i-th row's cell in the j-th column has a value (return 0), or if it is not stored (returns 1)
+
+        Inputs:
+        skylineMatrix *mat  -> Pointer to skyline matrix struct
+        int i               -> Row index
+        int j               -> Column index
+
+        Output:
+        int                 -> Does the cell have a value? 1:true | 0:false
+    */
+
+    if (i > j) return 0; // We only store the upper triangle.
+
+    if (mat->colTop[j] < i) return 0; // If the j-th column top is greater than the row index, then the value is not currently stored.
+
+    return 1; // Default return is 1 (is stored)
+}
+
+int getCellDataIndex (skylineMatrix *mat, int i, int j)
+{
+    /*
+        Gets the cellData index for the matrix indices i, j
+
+        Inputs:
+        skylineMatrix *mat  -> Pointer to skyline matrix struct
+        int i               -> Row index
+        int j               -> Column index
+
+        Output
+        int cellIndex       -> cellData's index corresponding to i, j.
+    */
+
+    int index = 0;
+
+    for (int k = 0; k < j; k++)
+    {
+        index += (k - mat->colTop[k] + 1);
+    }
+
+    return index;
+}
+
 
 double getFromSkyline(skylineMatrix *mat, int i, int j) 
 {
@@ -195,11 +288,7 @@ double getFromSkyline(skylineMatrix *mat, int i, int j)
     }
 
     // Find the offset from the start to the column, j.
-    int startOffset = 0;
-    for (int k = 0; k < j; ++k) 
-    {
-        startOffset += (k - mat->colTop[k] + 1);
-    }
+    int startOffset = getCellDataIndex(mat, i, j);
 
     int offset = j - i;
     int idx = startOffset + offset;
