@@ -4,7 +4,9 @@
 
 void testSkyline();
 
-int main() {
+int main() 
+{
+    printf("Test skyline matrix: \n");
     skylineMatrix mat;
     int n = 3;
     initSkylineMatrix(&mat, n);

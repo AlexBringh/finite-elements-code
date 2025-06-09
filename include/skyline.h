@@ -20,6 +20,7 @@ typedef struct
 void initSkylineMatrix(skylineMatrix *mat, int n);
 void resetSkylineMatrix (skylineMatrix *mat);
 void addToSkyline(skylineMatrix *mat, int i, int j, double value);
+void newaddToSkyline(skylineMatrix *mat, int i, int j, double value); // TEMP temporary for recreation of 'addToSkyline'
 double getFromSkyline(skylineMatrix *mat, int i, int j);
 void solveSkylineSystem(skylineMatrix *mat, double *r, double *u);
 

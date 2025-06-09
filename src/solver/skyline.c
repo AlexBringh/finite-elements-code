@@ -13,6 +13,7 @@ double* allocateAndZero(int size);
 void ensureCapacity(skylineMatrix *mat, int extraNeeded);
 int checkColumnForCellIndex(skylineMatrix *mat, int i, int j);
 int getCellDataIndex (skylineMatrix *mat, int i, int j);
+int getCellOffset (int i, int j);
 
 double* allocateAndZero(int size) 
 {
@@ -159,7 +160,8 @@ void addToSkyline(skylineMatrix *mat, int i, int j, double value)
 
     // Find offset again now that top may have changed
     int startOffset = 0;
-    for (int k = 0; k < j; ++k) {
+    for (int k = 0; k < j; ++k) 
+    {
         startOffset += (k - mat->colTop[k] + 1);
     }
     int offset = j - i;
@@ -174,12 +176,13 @@ void newaddToSkyline(skylineMatrix *mat, int i, int j, double value)
 
     // Calc the index in mat->cellData for the value
     int index = getCellDataIndex(mat, i, j);
+    int offset = getCellOffset(i, j);
 
     // Check if there is not a value stored for the cell already.
     if (checkColumnForCellIndex(mat, i, j))
     {
         // There is a value stored already.
-        mat->cellData[index] += value;
+        mat->cellData[(index + offset)] += value;
     }
     else
     {
@@ -192,12 +195,12 @@ void newaddToSkyline(skylineMatrix *mat, int i, int j, double value)
         ensureCapacity(mat, move);
 
         // Move the stored data from this current index, as many slots back as 'move' determines.
-        int colHeight = j - mat->colTop[j] + 1;
+        int colHeight = j - mat->colTop[j] + 1; // This is used to determine how many cells to be moved in memory, and so must start counting at 1, not 0.
         memmove(mat->cellData + index + move, mat->cellData + index, sizeof(double) * colHeight);
         memset(mat->cellData + index, 0, sizeof(double) * move);
 
         // Add the value to the cell
-        mat->cellData[index] += value;
+        mat->cellData[(index + offset)] += value;
 
         // Update 'storedCells'
         mat->storedCells += move;
@@ -212,6 +215,7 @@ void newaddToSkyline(skylineMatrix *mat, int i, int j, double value)
         mat->colTop[j] += move;
     }
 }
+
 
 int checkColumnForCellIndex(skylineMatrix *mat, int i, int j)
 {
@@ -233,6 +237,7 @@ int checkColumnForCellIndex(skylineMatrix *mat, int i, int j)
 
     return 1; // Default return is 1 (is stored)
 }
+
 
 int getCellDataIndex (skylineMatrix *mat, int i, int j)
 {
@@ -256,6 +261,24 @@ int getCellDataIndex (skylineMatrix *mat, int i, int j)
     }
 
     return index;
+}
+
+
+int getCellOffset (int i, int j)
+{
+    /* 
+        Calculates the offset from the diagonal to the cell in question at the i-th row.
+
+        Inputs:
+        skylineMatrix *mat  -> Pointer to skyline matrix struct
+        int i               -> Row index
+        int j               -> Column index
+
+        Output:
+        int                 -> Cell offset
+    */
+
+    return (j - i);
 }
 
 
@@ -290,7 +313,7 @@ double getFromSkyline(skylineMatrix *mat, int i, int j)
     // Find the offset from the start to the column, j.
     int startOffset = getCellDataIndex(mat, i, j);
 
-    int offset = j - i;
+    int offset = getCellOffset(i, j);
     int idx = startOffset + offset;
     return mat->cellData[idx];
 }
