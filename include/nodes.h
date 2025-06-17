@@ -3,14 +3,17 @@
 
 #include "materials.h"
 
+/*
+
+*/
+
 typedef struct
 {
     // Nodes struct
     int id;  // Node id (global)
     int dof; // Degrees of freedom
     int dim; // Dimensions
-    int mat; // Material number
-    double *coords;
+    double *coords; // Coordinates (size depends on 'dim')
 } node;
 
 #endif

@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-typedef struct {
+typedef struct { // REMOVE: This is moved to 'materials.c'
     int id;
     double E;
     double v;
@@ -12,7 +12,7 @@ typedef struct {
 } material;
 
 
-typedef struct {
+typedef struct { // REMOVE: This is moved to 'nodes.c'
     int id;
     double x;
     double y;
@@ -23,7 +23,7 @@ typedef struct {
 } node;
 
 
-typedef struct {
+typedef struct { // REMOVE: This will be generalized to handle any element type and size.
 
     int id; // Element id
     int gp; // Number of Gauss Points
@@ -43,6 +43,28 @@ typedef struct {
     double *trialEpsilonBarP;
 
 } quadElement;
+
+typedef struct 
+{
+    // Element struct
+    int id;
+    int gp;
+    int nnodes;
+    int dof;
+    int dim;
+    int mat;
+    int *nodeids;
+
+    // Accumulated stress and strain
+    double *sigma;
+    double *epsilonP;
+    double *epsilonBarP;
+
+    // Trial stress and strain
+    double trialSigma;
+    double trialEpsilonP;
+    double trialEpsilonBarP;
+} element;
 
 void commitTrialValuesAtGaussPoints (quadElement *element, int nelements);
 int displacementStrain (double *epsilon, double *B, double *ue, int nnodesElement, int dof);
