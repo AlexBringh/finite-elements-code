@@ -4,36 +4,17 @@ set(SRC_FILES main.c)
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
-add_subdirectory(elements)
+add_subdirectory(elements) # REMOVE: Remove this once restructuring is done
 add_subdirectory(postprocessing)
-
-if (BUILD_WITH_SOLVER)
-    add_subdirectory(solver)
-endif ()
-
-if (BUILD_WITH_MATH)
-    add_subdirectory(math)
-endif ()
-
-if (BUILD_WITH_UTILS)
-    add_subdirectory(utils)
-endif ()
-
-if (BUILD_WITH_DATA)
-    add_subdirectory(data)
-endif ()
-
-if (BUILD_WITH_PLASTICITY)
-    add_subdirectory(plasticity)
-endif()
-
-if (BUILD_ALL)
-    add_subdirectory(solver)
-    add_subdirectory(math)
-    add_subdirectory(utils)
-    add_subdirectory(data)
-    add_subdirectory(plasticity)
-endif ()
+add_subdirectory(mesh)
+add_subdirectory(elasticity)
+add_subdirectory(materials)
+add_subdirectory(cfd)
+add_subdirectory(solver)
+add_subdirectory(math)
+add_subdirectory(utils)
+add_subdirectory(data)
+add_subdirectory(plasticity)
 
 
 # Make library for tests
