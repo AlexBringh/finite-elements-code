@@ -3,7 +3,7 @@
 #include "jacobian.h"
 #include "shapeFunctions.h"
 
-
+// IMPLEMENT: Generalized Jacobian function, instead of limited to quad. Alternatively, make sure to use logic to determine which Jacobian function to use based on nnodes and dim values.
 int quadJacobian (double *J, double *Jinv, int m, double *detJ, double *Ni, double *NiPxi, double *NiPeta, double *coords, int dof)
 {
     /*
