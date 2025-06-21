@@ -15,7 +15,7 @@ add_subdirectory(math)
 add_subdirectory(utils)
 add_subdirectory(data)
 add_subdirectory(plasticity)
-
+add_subdirectory(codes)
 
 # Make library for tests
 file(GLOB_RECURSE LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
