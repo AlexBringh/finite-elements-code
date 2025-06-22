@@ -23,7 +23,7 @@ typedef struct
 
 } solidMaterial;
 
-typedef struct 
+typedef struct
 {
     // Fluid material type
     int id;

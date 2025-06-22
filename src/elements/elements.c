@@ -1,6 +1,7 @@
 #include "elements.h"
 #include "matrixArithmetic.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 void commitTrialValuesAtGaussPoints (quadElement *element, int nelements)
 {
@@ -27,27 +28,60 @@ void commitTrialValuesAtGaussPoints (quadElement *element, int nelements)
 }
 
 
-int displacementStrain (double *epsilon, double *B, double *ue, int nnodesElement, int dof)
+int elementInit (element e, int gp, int dof, int dim, int nnodes, int mat, int flag)
 {
     /*
-        Calculates the strain at the Gauss Point determined by the displacement of the nodes in the element, and the B matrix calculated for the current Gauss Point.
-
-        Inputs:
-        double *epsilon   -> Pointer to strain at the current Gauss Point. Results are stored here.
-        double *B         -> Pointer to B matrix at the current Gauss Point.
-        double *ue        -> Pointer to element displacement vector.
-        int nnodesElement -> Number of nodes in the element.
-        int dof           -> Degrees of freedom of the nodes.
+    IMPLEMENT: Init function for element struct. Uses flag to determine if the simulation will accumulate plastic effects.
+    
     */
 
-    // Init / reset the strain tensor, epsilon
-    for (int i = 0; i < nnodesElement * dof; i++)
+    e.gp = gp;
+    e.dof = dof;
+    e.dim = dim;
+    e.nnodes = nnodes;
+    e.mat = mat;
+
+    if (flag == 1) // Plastic variables
     {
-        *(epsilon + i) = 0;
+
     }
 
-    // Perform the matrix multiplication
-    matrixMultiply(B, ue, epsilon, 3, (nnodesElement * dof), 1);
+    return 0;
+}
+
+int elementSetElasticTrialValues(element e, int gp, double sigma)
+{
+    /*
+        IMPLEMENT: Set trial values for stress
+    */
 
     return 0;
+}
+
+int elementSetPlasticTrialValues (element e, int gp, double epsilonP, double epsilonBarP)
+{
+    /*
+        IMPLEMENT: Set trial values for plastic strains
+    */
+
+    return 0;
+}
+
+void elementCommitElasticTrialValues (element e)
+{
+    /*
+        IMPLEMENT: Commit elastic trial values to accumulated values
+    */
+
+
+}
+
+void elementCommitPlasticTrialValues (element e)
+{
+    /*
+        IMPLEMENT: Commit plastic trial values to accumulated values
+    */
+
+
+
 }
