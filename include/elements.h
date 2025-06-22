@@ -1,7 +1,10 @@
 #ifndef ELEMENTS_H
 #define ELEMENTS_H
 
+#include <stdio.h>
 #include <stdlib.h>
+
+#include "matrixArithmetic.h"
 
 typedef struct { // REMOVE: This is moved to 'materials.c'
     int id;
