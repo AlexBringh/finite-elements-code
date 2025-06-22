@@ -1,5 +1,59 @@
 #include "elements.h"
 
+/*
+
+    This module implements any functions for initializing and modifying element properties inside the structs defined in the header file.
+
+    See include/elements.h  -> Element struct definition
+
+*/
+
+char* elementType (element e)
+{
+    /*
+        Checks the parsed element struct and determines what element type it is based on the dimensionality and number of nodes.
+
+        Input:
+        element e   -> Pointer to element struct
+
+        Output:
+        char* type  -> String with the name of the element.
+    */
+
+    // TODO: Test if this way of returning char* is OK.
+
+    // 1D elements
+    if (e.dim == 1)
+    {
+        if (e.nnodes == 1) return "1D Point element \n";
+        else if(e.nnodes > 1) return "1D Line element \n";
+    }
+    
+    // 2D elements
+    else if (e.dim == 2)
+    {
+        if (e.nnodes == 3) return "2D Triangle element \n";
+        else if (e.nnodes == 4) return "2D Quadrilateral element \n";
+        else if (e.nnodes == 6) return "2D Quadratic Triangle element \n";
+        else if (e.nnodes == 8) return "2D Quadratic Quad element \n";
+        else if (e.nnodes == 9) return "2D Full Quadratic element \n";
+        else if (e.nnodes == 10) return "2D Cubic Triangle element \n";
+    }
+
+    // 3D elements
+    else if (e.dim == 3)
+    {
+        if (e.nnodes == 4) return "3D Linear Tetraherdon element \n";
+        else if (e.nnodes == 8) return "3D Linear Hexahedron element \n";
+        else if (e.nnodes == 10) return "3D Quadratic Tetrahedron element \n";
+        else if (e.nnodes == 20) return "3D Quadratic Hexahedron element \n";
+        else if (e.nnodes == 27) return "3D Full Quadratic Hexahedron element \n";
+    }
+
+
+    return NULL; // Undefined
+}
+
 void commitTrialValuesAtGaussPoints (quadElement *element, int nelements)
 {
     /*

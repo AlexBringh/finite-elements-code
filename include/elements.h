@@ -69,6 +69,7 @@ typedef struct
     double trialEpsilonBarP;
 } element;
 
+char* elementType (element e);
 void commitTrialValuesAtGaussPoints (quadElement *element, int nelements); // REMOVE once the new element struct and helper functions are used.
 int elementInit (element e, int gp, int dof, int dim, int nnodes, int mat, int flag);
 int elementSetElasticTrialValues (element e, int gp, double sigma);
