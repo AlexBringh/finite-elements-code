@@ -83,7 +83,7 @@ void globalInternalForceVector (double *Fint, double *FintE, int *nodeids, int d
         int Kem            ->  Size, m_element, of the rows/columns of the element stiffness matrix. The element internal force vector's row indices correspond to this.
     */
 
-    // Find mapping between element indices and gloval indices
+    // Find mapping between element indices and global indices
     int *globDOFs = malloc (Kem * sizeof(int));
     for (int i = 0; i < nnodesElement; i++)
     {
@@ -114,7 +114,7 @@ void applyFixedDisplacementResidualVector (int *uFixed, double *r, int Km)
         If yes, then the corresponding row in the residual force vector is set to 0.
 
         Inputs:
-        int *uFixed -> Pointer to fixed dispalcement vector (integer (boolean) values).
+        int *uFixed -> Pointer to fixed displacement vector (integer (boolean) values).
         double *r   -> Pointer to residual force vector. Results are stored here.
         int Km      -> Size, m, of rows in residual force vector and in fixed displacement vector.
     */
